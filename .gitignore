@@ -32,4 +32,6 @@ Thumbs.db
 references/*.png
 references/*.jpg
 references/*.jpeg
+references/*.webp
+references/*.gif
 
