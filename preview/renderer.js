@@ -1,12 +1,21 @@
 // Den preview renderer — mirrors mobile/lib/features/room/* exactly.
 // Same isometric math, same colours, same avatar pixel layout.
 
+// ── Constants ────────────────────────────────────────────────────────────
 const TILE_W = 64;
 const TILE_H = 32;
 const TILE_W_HALF = TILE_W / 2;
 const TILE_H_HALF = TILE_H / 2;
 const ROOM_COLS = 10;
 const ROOM_ROWS = 8;
+
+const AVATAR_W = 32;
+const AVATAR_H = 56;
+const AVATAR_SCALE_BOOST = 1.5;   // avatars are slightly oversized vs tiles (Habbo trick)
+
+const WALK_DURATION = 0.85;        // seconds per tile (slower, calmer pace)
+const BUBBLE_LIFETIME = 4.5;       // seconds before bubble vanishes
+const BUBBLE_RISE_SPEED = 26;      // px/s upward drift
 
 const PAL = {
   skyTop:        '#1A2744',
@@ -19,23 +28,12 @@ const PAL = {
   wallLight:     '#DDD0BA',
   wallDark:      '#C4B49E',
   wallOutline:   '#9A8870',
-  skinA:         '#FFCC99',
-  hairBrown:     '#4A3728',
-  hairDark:      '#1A1A6E',
-  shirtBlue:     '#4488CC',
-  shirtRed:      '#CC4444',
-  pantsNavy:     '#2244AA',
-  shoeBlack:     '#2A2A2A',
   accent:        '#F5A623',
   friendDot:     '#88BBFF',
+  bubbleFill:    '#FFFFFF',
+  bubbleBorder:  '#202830',
+  bubbleText:    '#1A1A2E',
 };
-
-// Room center in isometric world coords (matches DenGame._roomCX/CY)
-const ROOM_CX = 32;
-const ROOM_CY = 128;
-const ROOM_W = 576;
-const FACE_H = 5;   // tile thickness
-const WALL_H = 64;  // wall height in screen px
 
 // ── Iso math ────────────────────────────────────────────────────────────────
 function tileToScreen(col, row) {
@@ -49,18 +47,186 @@ function screenToTile(sx, sy) {
 }
 function tileDepth(col, row) { return (col + row) * 10; }
 
-// ── State ────────────────────────────────────────────────────────────────
+// ── Avatar pixel-art template ───────────────────────────────────────────
+// 32 wide × 56 tall. Each char is one design pixel.
+// Legend:
+//   .  transparent
+//   o  outline (very dark)
+//   H  hair main         h hair shadow         l hair highlight
+//   S  skin main         s skin shadow         L skin light/highlight
+//   e  eye pupil         w eye white           B brow / mouth shadow
+//   M  mouth (pink)
+//   1  shirt main        2 shirt shadow        3 shirt highlight
+//   c  collar (skin)
+//   P  pants main        p pants shadow
+//   X  shoe              x shoe sole / shadow
+const AVATAR_TEMPLATE = [
+//0         1         2         3
+//0123456789012345678901234567890 1
+  "................................", //  0
+  "............HHHHHHHH............", //  1
+  "..........HhhhhhhhhhhH..........", //  2
+  ".........HhhHHHHHHHHHHhhH.......", //  3 fringe top
+  "........HhHHHHHHHHHHHHHHhH......", //  4
+  ".......HhHHHHHHHHHHHHHHHHhH.....", //  5
+  ".......hHHHlHHHHHHHHHHHHHHh.....", //  6 hair highlight
+  "......hHHHHHHSSSSSSSSHHHHHHh....", //  7 fringe drops over forehead
+  "......hHHSSSSSSSSSSSSSSSSHHh....", //  8 hair sides
+  "......hHSSSSSSSSSSSSSSSSSSSh....", //  9
+  "......hSSBBBSSSSSSSSBBBSSSSh....", // 10 eyebrows
+  "......hSSeewwSSSSSSeewwSSSSh....", // 11 eyes (pupils + whites)
+  "......hSSeewwSSSSSSeewwSSSSh....", // 12
+  "......hSSSSSSSSSSSSSSSSSSSSh....", // 13
+  "......hSSSSSSSSSLLLSSSSSSSSh....", // 14 nose highlight
+  "......hSSSSSSSSLLLSSSSSSSSSh....", // 15
+  "......hSSSSSSSSSSSSSSSSSSSSh....", // 16
+  "......hSSSSSSMMMMMMMMSSSSSSh....", // 17 mouth
+  "......hSSSSSSBBBBBBBBSSSSSSh....", // 18 mouth shadow
+  "......hSSSSSSSSSSSSSSSSSSSSh....", // 19
+  ".......ssSSSSSSSSSSSSSSSSss.....", // 20 chin
+  "........sSSSSSSSSSSSSSSSs.......", // 21
+  "..........SSSSSSSSSSSSS.........", // 22 neck
+  "..........sSSSSSSSSSSs..........", // 23
+  ".........11ScccccccS11..........", // 24 collar V starts
+  "........1111ccccccc1111.........", // 25
+  ".......111111ccccc111111........", // 26
+  "......11111111ccc11111111.......", // 27
+  ".....1111111111c1111111111......", // 28 shoulders
+  "....S1111111111111111111111S....", // 29 arms (S = skin/sleeve edge)
+  "....S1111111122222222111111S....", // 30 shirt shading right side
+  "....S1111111122222222111111S....", // 31
+  "....S1111111122222222111111S....", // 32
+  "....S1111111122222222111111S....", // 33
+  "....S1111111122222222111111S....", // 34
+  "....S1111111122222222111111S....", // 35
+  "....S1111111122222222111111S....", // 36
+  "....S1111111122222222111111S....", // 37
+  "....S1111111122222222111111S....", // 38
+  "....s1111111122222222111111s....", // 39
+  "....sLL11111122222222111LLs.....", // 40 hands at the wrists
+  "....sLL11111122222222111LL......", // 41
+  ".....1111111122222222111........", // 42 shirt bottom narrows
+  "......11111122222222111.........", // 43
+  ".......PPPPPP....PPPPPP.........", // 44 legs split
+  ".......PPPPPP....PPPPPP.........", // 45
+  ".......PPPPPP....PPPPPP.........", // 46
+  ".......PPPPPP....PPPPPP.........", // 47
+  ".......PPPPPP....PPPPPP.........", // 48
+  ".......ppppPP....PPpppp.........", // 49 leg inner shadow
+  ".......ppppPP....PPpppp.........", // 50
+  "......XXXXXXXX..XXXXXXXX........", // 51 shoes
+  "......XXXXXXXX..XXXXXXXX........", // 52
+  "......xxxxxxxx..xxxxxxxx........", // 53 shoe sole
+  "................................", // 54
+  "................................", // 55
+];
+
+function parseHex(hex) {
+  if (hex[0] === '#') hex = hex.slice(1);
+  const n = parseInt(hex, 16);
+  return { r: (n >> 16) & 0xff, g: (n >> 8) & 0xff, b: n & 0xff };
+}
+function rgbStr(r, g, b) { return `rgb(${r|0},${g|0},${b|0})`; }
+function darken(hex, amt) {
+  const c = parseHex(hex);
+  return rgbStr(c.r * (1 - amt), c.g * (1 - amt), c.b * (1 - amt));
+}
+function lighten(hex, amt) {
+  const c = parseHex(hex);
+  return rgbStr(c.r + (255 - c.r) * amt, c.g + (255 - c.g) * amt, c.b + (255 - c.b) * amt);
+}
+
+// Resolve a pixel-art char into an RGBA byte tuple using the avatar config.
+function resolveColor(ch, cfg) {
+  switch (ch) {
+    case '.': return null;
+    case 'o': return [0, 0, 0, 255];
+    case 'H': return rgbaFromCss(cfg.hair);
+    case 'h': return rgbaFromCss(darken(cfg.hair, 0.30));
+    case 'l': return rgbaFromCss(lighten(cfg.hair, 0.25));
+    case 'S': return rgbaFromCss(cfg.skin);
+    case 's': return rgbaFromCss(darken(cfg.skin, 0.20));
+    case 'L': return rgbaFromCss(lighten(cfg.skin, 0.18));
+    case 'e': return [26, 26, 46, 255];      // pupil
+    case 'w': return [255, 255, 255, 255];    // eye white
+    case 'B': return [58, 40, 32, 255];       // brow / mouth shadow
+    case 'M': return [204, 102, 119, 255];    // mouth
+    case '1': return rgbaFromCss(cfg.shirt);
+    case '2': return rgbaFromCss(darken(cfg.shirt, 0.22));
+    case '3': return rgbaFromCss(lighten(cfg.shirt, 0.18));
+    case 'c': return rgbaFromCss(cfg.skin);
+    case 'P': return rgbaFromCss(cfg.pants);
+    case 'p': return rgbaFromCss(darken(cfg.pants, 0.22));
+    case 'X': return [42, 42, 42, 255];
+    case 'x': return [22, 22, 22, 255];
+    default:  return null;
+  }
+}
+function rgbaFromCss(css) {
+  // Accepts '#rrggbb' or 'rgb(r,g,b)'
+  if (css[0] === '#') {
+    const c = parseHex(css);
+    return [c.r, c.g, c.b, 255];
+  }
+  const m = css.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  return [parseInt(m[1]), parseInt(m[2]), parseInt(m[3]), 255];
+}
+
+// Build an offscreen canvas with the avatar drawn at 1:1 pixel scale.
+function buildAvatarSprite(cfg) {
+  const off = document.createElement('canvas');
+  off.width = AVATAR_W;
+  off.height = AVATAR_H;
+  const octx = off.getContext('2d');
+  const img = octx.createImageData(AVATAR_W, AVATAR_H);
+
+  for (let y = 0; y < AVATAR_H; y++) {
+    const row = AVATAR_TEMPLATE[y] || '';
+    for (let x = 0; x < AVATAR_W; x++) {
+      const ch = row[x] || '.';
+      const px = resolveColor(ch, cfg);
+      if (!px) continue;
+      const idx = (y * AVATAR_W + x) * 4;
+      img.data[idx]     = px[0];
+      img.data[idx + 1] = px[1];
+      img.data[idx + 2] = px[2];
+      img.data[idx + 3] = px[3];
+    }
+  }
+  octx.putImageData(img, 0, 0);
+  return off;
+}
+
+// ── Canvas / state ───────────────────────────────────────────────────────
 const canvas = document.getElementById('room');
 const ctx = canvas.getContext('2d');
 
 let zoom = 1;
 let viewportW = 0, viewportH = 0;
 
-const me     = { userId: 'me', col: 5, row: 5, isMe: true,  cfg: { shirt: PAL.shirtBlue, hair: PAL.hairBrown }, state: 'idle', target: null, walkT: 0, bob: 0 };
-const friend = { userId: 'friend', col: 3, row: 3, isMe: false, cfg: { shirt: PAL.shirtRed,  hair: PAL.hairDark   }, state: 'idle', target: null, walkT: 0, bob: 0 };
+const ROOM_CX = 32;
+const ROOM_CY = 128;
+const ROOM_W = 576;
+const FACE_H = 5;
+const WALL_H = 64;
+
+const me     = makeAvatar('me',     5, 5, true,  { hair: '#4A3728', skin: '#FFCC99', shirt: '#4488CC', pants: '#2244AA' });
+const friend = makeAvatar('friend', 3, 3, false, { hair: '#1A1A6E', skin: '#FFCC99', shirt: '#CC4444', pants: '#333344' });
 const avatars = [me, friend];
 
-// ── Resize / zoom ────────────────────────────────────────────────────────
+const bubbles = [];
+
+function makeAvatar(userId, col, row, isMe, cfg) {
+  const a = {
+    userId, col, row, isMe, cfg,
+    state: 'idle', target: null, walkT: 0, bob: Math.random() * Math.PI * 2,
+    sprite: null,
+  };
+  a.sprite = buildAvatarSprite(cfg);
+  return a;
+}
+
+// ── Layout ───────────────────────────────────────────────────────────────
 function resize() {
   const rect = canvas.getBoundingClientRect();
   const dpr = window.devicePixelRatio || 1;
@@ -68,6 +234,7 @@ function resize() {
   canvas.height = rect.height * dpr;
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.scale(dpr, dpr);
+  ctx.imageSmoothingEnabled = false;
   viewportW = rect.width;
   viewportH = rect.height;
   zoom = (viewportW * 0.92) / ROOM_W;
@@ -75,7 +242,6 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-// ── World → screen helper ────────────────────────────────────────────────
 function worldToScreen(wx, wy) {
   return {
     sx: viewportW / 2 + (wx - ROOM_CX) * zoom,
@@ -89,10 +255,10 @@ function screenToWorld(sx, sy) {
   };
 }
 
-// ── Renderables ──────────────────────────────────────────────────────────
+// ── Floor / walls ────────────────────────────────────────────────────────
 function drawFloorTile(col, row) {
   const c = tileToScreen(col, row);
-  const { sx, sy } = worldToScreen(c.x, c.y - TILE_H_HALF); // top vertex of diamond
+  const { sx, sy } = worldToScreen(c.x, c.y - TILE_H_HALF);
   const w = TILE_W * zoom;
   const dh = TILE_H * zoom;
   const fh = FACE_H * zoom;
@@ -101,7 +267,6 @@ function drawFloorTile(col, row) {
   ctx.save();
   ctx.translate(sx - w / 2, sy);
 
-  // top face
   ctx.beginPath();
   ctx.moveTo(w / 2, 0);
   ctx.lineTo(w,     dh / 2);
@@ -114,42 +279,43 @@ function drawFloorTile(col, row) {
   ctx.lineWidth = 0.75;
   ctx.stroke();
 
-  // left face
   ctx.beginPath();
-  ctx.moveTo(0,         dh / 2);
-  ctx.lineTo(w / 2,     dh);
-  ctx.lineTo(w / 2,     dh + fh);
-  ctx.lineTo(0,         dh / 2 + fh);
+  ctx.moveTo(0,     dh / 2);
+  ctx.lineTo(w / 2, dh);
+  ctx.lineTo(w / 2, dh + fh);
+  ctx.lineTo(0,     dh / 2 + fh);
   ctx.closePath();
   ctx.fillStyle = PAL.floorLeftFace;
   ctx.fill();
   ctx.stroke();
 
-  // right face
   ctx.beginPath();
-  ctx.moveTo(w / 2,     dh);
-  ctx.lineTo(w,         dh / 2);
-  ctx.lineTo(w,         dh / 2 + fh);
-  ctx.lineTo(w / 2,     dh + fh);
+  ctx.moveTo(w / 2, dh);
+  ctx.lineTo(w,     dh / 2);
+  ctx.lineTo(w,     dh / 2 + fh);
+  ctx.lineTo(w / 2, dh + fh);
   ctx.closePath();
   ctx.fillStyle = PAL.floorRightFace;
   ctx.fill();
   ctx.stroke();
-
   ctx.restore();
 }
 
-// One single back-right wall panel — runs from back corner down-right to far end of row=0.
 function drawBackRightWall() {
-  // Bottom edge runs from tile(0,0) top vertex to tile(COLS-1, 0) right vertex
-  const bL = tileToScreen(0, 0);           bL.y -= TILE_H_HALF; // top vertex
-  const bR = tileToScreen(ROOM_COLS, 0);   bR.y -= TILE_H_HALF; // virtual "next" tile's top vertex
-  const wh = WALL_H;
-
-  const pBL = worldToScreen(bL.x, bL.y);
-  const pBR = worldToScreen(bR.x, bR.y);
-  const pTL = worldToScreen(bL.x, bL.y - wh);
-  const pTR = worldToScreen(bR.x, bR.y - wh);
+  const bL = tileToScreen(0, 0);          bL.y -= TILE_H_HALF;
+  const bR = tileToScreen(ROOM_COLS, 0);  bR.y -= TILE_H_HALF;
+  drawWallPanel(bL, bR, WALL_H, PAL.wallLight, ROOM_COLS);
+}
+function drawBackLeftWall() {
+  const bR = tileToScreen(0, 0);          bR.y -= TILE_H_HALF;
+  const bL = tileToScreen(0, ROOM_ROWS);  bL.y -= TILE_H_HALF;
+  drawWallPanel(bL, bR, WALL_H, PAL.wallDark, ROOM_ROWS);
+}
+function drawWallPanel(bLw, bRw, wh, fill, divisions) {
+  const pBL = worldToScreen(bLw.x, bLw.y);
+  const pBR = worldToScreen(bRw.x, bRw.y);
+  const pTL = worldToScreen(bLw.x, bLw.y - wh);
+  const pTR = worldToScreen(bRw.x, bRw.y - wh);
 
   ctx.beginPath();
   ctx.moveTo(pBL.sx, pBL.sy);
@@ -157,13 +323,12 @@ function drawBackRightWall() {
   ctx.lineTo(pTR.sx, pTR.sy);
   ctx.lineTo(pTL.sx, pTL.sy);
   ctx.closePath();
-  ctx.fillStyle = PAL.wallLight;
+  ctx.fillStyle = fill;
   ctx.fill();
   ctx.strokeStyle = PAL.wallOutline;
   ctx.lineWidth = 0.75;
   ctx.stroke();
 
-  // Brick courses
   ctx.strokeStyle = 'rgba(154,136,112,0.35)';
   ctx.lineWidth = 0.5;
   for (let dy = 12 * zoom; dy < wh * zoom; dy += 14 * zoom) {
@@ -172,145 +337,181 @@ function drawBackRightWall() {
     ctx.lineTo(pBR.sx, pBR.sy - dy);
     ctx.stroke();
   }
-  // Vertical mortar (every other course offset)
   ctx.beginPath();
-  const dx = (pBR.sx - pBL.sx) / 10;
-  const dyTotal = (pBR.sy - pBL.sy) / 10;
-  for (let i = 1; i < 10; i++) {
+  const dx = (pBR.sx - pBL.sx) / divisions;
+  const dyT = (pBR.sy - pBL.sy) / divisions;
+  for (let i = 1; i < divisions; i++) {
     const sx = pBL.sx + dx * i;
-    const sy = pBL.sy + dyTotal * i;
+    const sy = pBL.sy + dyT * i;
     ctx.moveTo(sx, sy);
     ctx.lineTo(sx, sy - wh * zoom);
   }
   ctx.stroke();
 }
 
-// Back-left wall — runs from back corner down-left along col=0.
-function drawBackLeftWall() {
-  const bR = tileToScreen(0, 0);              bR.y -= TILE_H_HALF; // back corner top vertex
-  const bL = tileToScreen(0, ROOM_ROWS);      bL.y -= TILE_H_HALF; // virtual "next" row top vertex
-  const wh = WALL_H;
-
-  const pBL = worldToScreen(bL.x, bL.y);
-  const pBR = worldToScreen(bR.x, bR.y);
-  const pTL = worldToScreen(bL.x, bL.y - wh);
-  const pTR = worldToScreen(bR.x, bR.y - wh);
-
-  ctx.beginPath();
-  ctx.moveTo(pBL.sx, pBL.sy);
-  ctx.lineTo(pBR.sx, pBR.sy);
-  ctx.lineTo(pTR.sx, pTR.sy);
-  ctx.lineTo(pTL.sx, pTL.sy);
-  ctx.closePath();
-  ctx.fillStyle = PAL.wallDark;
-  ctx.fill();
-  ctx.strokeStyle = PAL.wallOutline;
-  ctx.lineWidth = 0.75;
-  ctx.stroke();
-
-  ctx.strokeStyle = 'rgba(154,136,112,0.3)';
-  ctx.lineWidth = 0.5;
-  for (let dy = 12 * zoom; dy < wh * zoom; dy += 14 * zoom) {
-    ctx.beginPath();
-    ctx.moveTo(pBL.sx, pBL.sy - dy);
-    ctx.lineTo(pBR.sx, pBR.sy - dy);
-    ctx.stroke();
-  }
-  ctx.beginPath();
-  const dx = (pBR.sx - pBL.sx) / 8;
-  const dyTotal = (pBR.sy - pBL.sy) / 8;
-  for (let i = 1; i < 8; i++) {
-    const sx = pBL.sx + dx * i;
-    const sy = pBL.sy + dyTotal * i;
-    ctx.moveTo(sx, sy);
-    ctx.lineTo(sx, sy - wh * zoom);
-  }
-  ctx.stroke();
-}
-
-function drawAvatar(a) {
-  // Interpolate position if walking
-  let col = a.col, row = a.row;
-  let wx, wy;
+// ── Avatar ───────────────────────────────────────────────────────────────
+function avatarWorldPos(a) {
   if (a.state === 'walking' && a.target) {
     const from = tileToScreen(a.col, a.row);
     const to   = tileToScreen(a.target.col, a.target.row);
     const t = easeInOut(a.walkT);
-    wx = from.x + (to.x - from.x) * t;
-    wy = from.y + (to.y - from.y) * t;
-  } else {
-    const p = tileToScreen(col, row);
-    wx = p.x; wy = p.y;
+    return { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
   }
+  const p = tileToScreen(a.col, a.row);
+  return { x: p.x, y: p.y };
+}
+
+function drawAvatar(a) {
+  const { x: wx, y: wy } = avatarWorldPos(a);
   const { sx, sy } = worldToScreen(wx, wy);
-  const s = zoom; // pixel scale
+  const scale = zoom * AVATAR_SCALE_BOOST;
+  const w = AVATAR_W * scale;
+  const h = AVATAR_H * scale;
 
-  const W = 24, H = 42;
-  const x0 = sx - (W * s) / 2;
-  const y0 = sy - H * s + (a.state === 'idle' ? Math.sin(a.bob) * 0.6 * s : 0);
-
-  // Shadow
-  ctx.fillStyle = 'rgba(0,0,0,0.2)';
+  // Soft shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
   ctx.beginPath();
-  ctx.ellipse(sx, sy - 1, 10 * s, 3 * s, 0, 0, Math.PI * 2);
+  ctx.ellipse(sx, sy - 1, 9 * scale, 2.6 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  function px(x, y, w, h, col) {
-    ctx.fillStyle = col;
-    ctx.fillRect(x0 + x * s, y0 + y * s, w * s, h * s);
-  }
+  // Idle bob
+  const bob = a.state === 'idle' ? Math.sin(a.bob) * 0.5 * scale : 0;
 
-  // Hair
-  px(4, 0, 16, 7, a.cfg.hair);
-  px(3, 6, 3, 4, a.cfg.hair);
-  px(18, 6, 3, 4, a.cfg.hair);
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(a.sprite, Math.round(sx - w / 2), Math.round(sy - h + bob), Math.round(w), Math.round(h));
 
-  // Head
-  px(4, 6, 16, 14, PAL.skinA);
-
-  // Eyes
-  px(7, 11, 3, 3, '#1A1A2E');
-  px(14, 11, 3, 3, '#1A1A2E');
-  px(9, 11, 1, 1, '#FFFFFF');
-  px(16, 11, 1, 1, '#FFFFFF');
-
-  // Mouth
-  px(9, 16, 6, 2, '#CC8866');
-
-  // Neck
-  px(9, 20, 6, 3, PAL.skinA);
-
-  // Shirt + shading
-  px(3, 23, 18, 12, a.cfg.shirt);
-  px(16, 23, 5, 12, darken(a.cfg.shirt, 0.18));
-
-  // Collar
-  px(9, 23, 6, 3, PAL.skinA);
-
-  // Legs
-  px(3, 35, 8, 7, PAL.pantsNavy);
-  px(13, 35, 8, 7, PAL.pantsNavy);
-
-  // Shoes
-  px(2, 40, 9, 2, PAL.shoeBlack);
-  px(13, 40, 9, 2, PAL.shoeBlack);
-
-  // Username dot above head
+  // Username dot
   ctx.fillStyle = a.isMe ? PAL.accent : PAL.friendDot;
   ctx.beginPath();
-  ctx.arc(sx, y0 - 4 * s, 3 * s, 0, Math.PI * 2);
+  ctx.arc(sx, sy - h + bob - 5, 3 * Math.max(1, zoom), 0, Math.PI * 2);
   ctx.fill();
+}
+
+// ── Chat bubbles ─────────────────────────────────────────────────────────
+function spawnBubble(a, text) {
+  const { x: wx, y: wy } = avatarWorldPos(a);
+  const { sx, sy } = worldToScreen(wx, wy);
+  const headY = sy - AVATAR_H * zoom * AVATAR_SCALE_BOOST - 4;
+
+  // Push older bubbles from this avatar higher to stack neatly
+  for (const b of bubbles) {
+    if (b.userId === a.userId && b.targetY > headY - 30) {
+      b.targetY -= 24;
+    }
+  }
+
+  bubbles.push({
+    userId: a.userId,
+    text,
+    sx,
+    sy: headY,
+    targetY: headY,
+    age: 0,
+    lifetime: BUBBLE_LIFETIME,
+  });
+}
+
+function updateBubbles(dt) {
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    const b = bubbles[i];
+    b.age += dt;
+    b.targetY -= BUBBLE_RISE_SPEED * dt;
+    // Ease toward target
+    b.sy += (b.targetY - b.sy) * Math.min(1, dt * 6);
+    if (b.age >= b.lifetime) bubbles.splice(i, 1);
+  }
+}
+
+function drawBubbles() {
+  ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.textBaseline = 'middle';
+  ctx.textAlign = 'left';
+
+  for (const b of bubbles) {
+    const fadeStart = b.lifetime * 0.7;
+    const alpha = b.age > fadeStart
+      ? Math.max(0, 1 - (b.age - fadeStart) / (b.lifetime - fadeStart))
+      : 1;
+    const popIn = Math.min(1, b.age / 0.15);
+    drawSpeechBubble(b.sx, b.sy, b.text, alpha * popIn, b.age < 0.4);
+  }
+}
+
+function drawSpeechBubble(cx, cy, text, alpha, withTail) {
+  const padX = 10, padY = 6;
+  const maxW = 220;
+  const m = ctx.measureText(text);
+  const w = Math.min(maxW, m.width + padX * 2);
+  const h = 24;
+  const x = Math.round(cx - w / 2);
+  const y = Math.round(cy - h);
+  const r = 12;
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.30)';
+  roundedRect(x + 1, y + 2, w, h, r);
+  ctx.fill();
+
+  // Bubble
+  ctx.fillStyle = PAL.bubbleFill;
+  roundedRect(x, y, w, h, r);
+  ctx.fill();
+  ctx.strokeStyle = PAL.bubbleBorder;
+  ctx.lineWidth = 1.2;
+  ctx.stroke();
+
+  // Tail (only briefly, while bubble is fresh)
+  if (withTail) {
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, y + h - 0.5);
+    ctx.lineTo(cx + 0, y + h + 6);
+    ctx.lineTo(cx + 5, y + h - 0.5);
+    ctx.closePath();
+    ctx.fillStyle = PAL.bubbleFill;
+    ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(cx - 5, y + h);
+    ctx.lineTo(cx + 0, y + h + 6);
+    ctx.lineTo(cx + 5, y + h);
+    ctx.strokeStyle = PAL.bubbleBorder;
+    ctx.stroke();
+  }
+
+  // Text
+  ctx.fillStyle = PAL.bubbleText;
+  let toDraw = text;
+  if (m.width > maxW - padX * 2) {
+    // Ellipsise
+    while (toDraw.length > 4 && ctx.measureText(toDraw + '…').width > maxW - padX * 2) {
+      toDraw = toDraw.slice(0, -1);
+    }
+    toDraw += '…';
+  }
+  ctx.textAlign = 'center';
+  ctx.fillText(toDraw, cx, y + h / 2 + 0.5);
+
+  ctx.restore();
+}
+
+function roundedRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.arcTo(x + w, y, x + w, y + r, r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────
 function easeInOut(t) { return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t; }
-function darken(hex, amt) {
-  const n = parseInt(hex.slice(1), 16);
-  const r = Math.max(0, ((n >> 16) & 0xff) * (1 - amt));
-  const g = Math.max(0, ((n >> 8) & 0xff) * (1 - amt));
-  const b = Math.max(0,  (n        & 0xff) * (1 - amt));
-  return `rgb(${r|0},${g|0},${b|0})`;
-}
 
 // ── Render loop ──────────────────────────────────────────────────────────
 function frame(dtMs) {
@@ -319,40 +520,40 @@ function frame(dtMs) {
   for (const a of avatars) {
     a.bob += dt * 2.5;
     if (a.state === 'walking' && a.target) {
-      a.walkT = Math.min(1, a.walkT + dt / 0.35);
+      a.walkT = Math.min(1, a.walkT + dt / WALK_DURATION);
       if (a.walkT >= 1) {
         a.col = a.target.col; a.row = a.target.row;
         a.target = null; a.state = 'idle'; a.walkT = 0;
       }
     }
   }
+  updateBubbles(dt);
 
-  // Clear
   ctx.clearRect(0, 0, viewportW, viewportH);
 
-  // Build draw list with depth
+  // Draw list
   const items = [];
-  // Floor
+  items.push({ depth: -100, draw: drawBackRightWall });
+  items.push({ depth: -99,  draw: drawBackLeftWall });
   for (let r = 0; r < ROOM_ROWS; r++) {
     for (let c = 0; c < ROOM_COLS; c++) {
       items.push({ depth: tileDepth(c, r), draw: () => drawFloorTile(c, r) });
     }
   }
-  // Back walls (continuous panels — drawn before any floor tile)
-  items.push({ depth: -100, draw: drawBackRightWall });
-  items.push({ depth: -99,  draw: drawBackLeftWall });
-  // Avatars
   for (const a of avatars) {
-    const c = a.state === 'walking' && a.target
+    const liveCol = a.state === 'walking' && a.target
       ? a.target.col * easeInOut(a.walkT) + a.col * (1 - easeInOut(a.walkT))
       : a.col;
-    const r = a.state === 'walking' && a.target
+    const liveRow = a.state === 'walking' && a.target
       ? a.target.row * easeInOut(a.walkT) + a.row * (1 - easeInOut(a.walkT))
       : a.row;
-    items.push({ depth: tileDepth(Math.round(c), Math.round(r)) + 5, draw: () => drawAvatar(a) });
+    items.push({ depth: tileDepth(Math.round(liveCol), Math.round(liveRow)) + 5, draw: () => drawAvatar(a) });
   }
   items.sort((a, b) => a.depth - b.depth);
   for (const it of items) it.draw();
+
+  // Bubbles render last, on top of everything in the world.
+  drawBubbles();
 }
 
 let last = performance.now();
@@ -386,11 +587,16 @@ const messages   = document.getElementById('messages');
 const input      = document.getElementById('msgInput');
 const sendBtn    = document.getElementById('sendBtn');
 
-chatHandle.addEventListener('click', () => chat.classList.toggle('expanded'));
+chatHandle.addEventListener('click', () => {
+  chat.classList.toggle('expanded');
+  if (chat.classList.contains('expanded')) {
+    setTimeout(() => input.focus(), 100);
+  }
+});
 
-function addBubble(text, me) {
+function addBubble(text, isMe) {
   const div = document.createElement('div');
-  div.className = 'bubble ' + (me ? 'me' : 'them');
+  div.className = 'bubble ' + (isMe ? 'me' : 'them');
   div.textContent = text;
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;
@@ -398,12 +604,22 @@ function addBubble(text, me) {
 
 sendBtn.addEventListener('click', send);
 input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
+
 function send() {
   const t = input.value.trim();
   if (!t) return;
   addBubble(t, true);
+  spawnBubble(me, t);
   input.value = '';
-  if (!chat.classList.contains('expanded')) chat.classList.add('expanded');
-  // Demo: friend echo after a sec
-  setTimeout(() => addBubble('cool', false), 800);
+
+  // Demo friend echo
+  setTimeout(() => {
+    const replies = ['cool', 'haha', 'nice', 'yeah?', 'love it'];
+    const reply = replies[Math.floor(Math.random() * replies.length)];
+    addBubble(reply, false);
+    spawnBubble(friend, reply);
+  }, 1200);
 }
+
+// Welcome bubble on load
+setTimeout(() => spawnBubble(friend, 'hey welcome to my den :)'), 600);

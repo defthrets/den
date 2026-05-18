@@ -5,7 +5,6 @@ import '../chat/chat_overlay.dart';
 import 'den_game.dart';
 
 /// Full-screen room: Flame isometric world behind, chat panel on top.
-/// When chatting, tap outside the keyboard to dismiss it.
 class RoomScreen extends StatefulWidget {
   final String roomOwnerId;
   final String myUserId;
@@ -35,10 +34,9 @@ class _RoomScreenState extends State<RoomScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      resizeToAvoidBottomInset: false, // Flame handles keyboard insets
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
-          // ── Sky gradient behind the game ──────────────────────────
           Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -48,23 +46,17 @@ class _RoomScreenState extends State<RoomScreen> {
               ),
             ),
           ),
-
-          // ── Flame isometric room ──────────────────────────────────
           GameWidget(game: _game),
-
-          // ── Top bar ───────────────────────────────────────────────
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               child: Row(
                 children: [
-                  // Back / friends list
                   _IconButton(
                     icon: Icons.arrow_back_ios_new_rounded,
                     onTap: () => Navigator.of(context).maybePop(),
                   ),
                   const SizedBox(width: 10),
-                  // Room owner label
                   Container(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -92,7 +84,6 @@ class _RoomScreenState extends State<RoomScreen> {
                     ),
                   ),
                   const Spacer(),
-                  // Avatar customise shortcut
                   _IconButton(
                     icon: Icons.person_rounded,
                     onTap: () {
@@ -103,8 +94,6 @@ class _RoomScreenState extends State<RoomScreen> {
               ),
             ),
           ),
-
-          // ── Chat overlay at bottom ────────────────────────────────
           Positioned(
             bottom: 0,
             left: 0,
@@ -112,6 +101,7 @@ class _RoomScreenState extends State<RoomScreen> {
             child: ChatOverlay(
               friendId: widget.roomOwnerId,
               myUserId: widget.myUserId,
+              game: _game,
             ),
           ),
         ],

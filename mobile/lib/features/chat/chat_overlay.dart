@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/palette.dart';
+import '../room/den_game.dart';
 
 class ChatMessage {
   final String userId;
@@ -16,43 +17,31 @@ class ChatMessage {
 }
 
 /// Sliding chat panel that sits at the bottom of the room screen.
-/// Pull up to expand, tap down to collapse to a slim bar.
+/// Tapping the bar expands it; sending a message also spawns a floating
+/// speech bubble above the speaker via [game.spawnChatBubble].
 class ChatOverlay extends StatefulWidget {
   final String friendId;
   final String myUserId;
+  final DenGame game;
 
   const ChatOverlay({
     super.key,
     required this.friendId,
     required this.myUserId,
+    required this.game,
   });
 
   @override
   State<ChatOverlay> createState() => _ChatOverlayState();
 }
 
-class _ChatOverlayState extends State<ChatOverlay>
-    with SingleTickerProviderStateMixin {
+class _ChatOverlayState extends State<ChatOverlay> {
   bool _expanded = false;
   final TextEditingController _input = TextEditingController();
   final ScrollController _scroll = ScrollController();
   final FocusNode _focusNode = FocusNode();
 
-  // Demo messages — replaced by WebSocket stream
-  final List<ChatMessage> _messages = [
-    ChatMessage(
-      userId: 'demo_friend',
-      text: 'Hey! Welcome to my den :)',
-      sentAt: DateTime.now().subtract(const Duration(minutes: 3)),
-      isMe: false,
-    ),
-    ChatMessage(
-      userId: 'me',
-      text: 'Looking good in here!',
-      sentAt: DateTime.now().subtract(const Duration(minutes: 2)),
-      isMe: true,
-    ),
-  ];
+  final List<ChatMessage> _messages = [];
 
   @override
   void dispose() {
@@ -76,7 +65,11 @@ class _ChatOverlayState extends State<ChatOverlay>
       _input.clear();
     });
 
+    // Float bubble above my avatar in the room
+    widget.game.spawnChatBubble(widget.myUserId, text);
+
     // TODO: encrypt with Signal Double Ratchet and send via WebSocket
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scroll.hasClients) {
         _scroll.animateTo(
@@ -112,15 +105,20 @@ class _ChatOverlayState extends State<ChatOverlay>
         ),
         child: Column(
           children: [
-            // ── Drag handle + header ────────────────────────────────
             GestureDetector(
-              onTap: () => setState(() => _expanded = !_expanded),
+              onTap: () {
+                setState(() => _expanded = !_expanded);
+                if (_expanded) {
+                  Future.delayed(const Duration(milliseconds: 120), () {
+                    if (mounted) _focusNode.requestFocus();
+                  });
+                }
+              },
               child: Container(
                 height: 56,
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Row(
                   children: [
-                    // Handle pill
                     Container(
                       width: 36,
                       height: 4,
@@ -152,8 +150,6 @@ class _ChatOverlayState extends State<ChatOverlay>
                 ),
               ),
             ),
-
-            // ── Message list ─────────────────────────────────────────
             if (_expanded) ...[
               Expanded(
                 child: ListView.builder(
@@ -163,7 +159,6 @@ class _ChatOverlayState extends State<ChatOverlay>
                   itemBuilder: (_, i) => _MessageBubble(msg: _messages[i]),
                 ),
               ),
-              // ── Input bar ─────────────────────────────────────────
               Container(
                 color: DenPalette.surface,
                 padding: EdgeInsets.only(

@@ -7,11 +7,9 @@ import '../../core/constants.dart';
 import '../../core/iso_math.dart';
 import '../../core/palette.dart';
 import 'components/avatar_component.dart';
+import 'components/chat_bubble.dart';
 import 'components/floor_tile.dart';
 import 'components/wall_tile.dart';
-
-/// Packet types sent over the room WebSocket.
-enum RoomPacketType { join, move, leave, avatarMoved, roomState, chat }
 
 class DenGame extends FlameGame with TapCallbacks {
   final String roomOwnerId;
@@ -20,12 +18,9 @@ class DenGame extends FlameGame with TapCallbacks {
   late AvatarComponent _myAvatar;
   final Map<String, AvatarComponent> _avatars = {};
 
-  // Room screen bounds (pre-computed for camera centering)
   // For a 10×8 room:
-  //   leftmost X  = -(roomRows-1)*32 - 32 = -256
-  //   rightmost X = (roomCols-1)*32 + 32  =  320
-  //   room width  = 576
-  //   top Y       = -16, bottom Y = (roomCols+roomRows-2)*16 + 16 = 272
+  //   leftmost X  = -256, rightmost X = 320, width = 576
+  //   top Y       = -16,  bottom Y    = 272
   //   room center = (32, 128)
   static const double _roomCX = 32.0;
   static const double _roomCY = 128.0;
@@ -62,7 +57,7 @@ class DenGame extends FlameGame with TapCallbacks {
     world.add(_myAvatar);
     _avatars[myUserId] = _myAvatar;
 
-    // ── Friend avatar (demo — replace with server state) ──────────────
+    // ── Friend avatar (demo) ──────────────────────────────────────────
     final friend = AvatarComponent(
       col: 3,
       row: 3,
@@ -94,24 +89,26 @@ class DenGame extends FlameGame with TapCallbacks {
 
     if (tc >= 0 && tc < roomCols && tr >= 0 && tr < roomRows) {
       _myAvatar.walkTo(tc, tr);
-      // TODO: send move packet to server-rooms WebSocket
+      // TODO: send move packet over WebSocket
     }
   }
 
-  /// Called by the WebSocket layer when a remote avatar moves.
+  /// Spawn a floating chat bubble above the given user's avatar.
+  /// If the user isn't in the room, no-op.
+  void spawnChatBubble(String userId, String text) {
+    final a = _avatars[userId];
+    if (a == null) return;
+    world.add(ChatBubbleComponent(text: text, origin: a.headWorldPosition()));
+  }
+
   void onRemoteMove(String userId, int col, int row) {
     _avatars[userId]?.walkTo(col, row);
   }
 
-  /// Spawn or update a remote avatar (e.g. someone joining the room).
   void onAvatarJoined(String userId, int col, int row, AvatarConfig config) {
     if (_avatars.containsKey(userId)) return;
     final avatar = AvatarComponent(
-      col: col,
-      row: row,
-      isMe: false,
-      userId: userId,
-      config: config,
+      col: col, row: row, isMe: false, userId: userId, config: config,
     );
     world.add(avatar);
     _avatars[userId] = avatar;
