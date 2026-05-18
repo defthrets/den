@@ -47,15 +47,9 @@ class DenGame extends FlameGame with TapCallbacks {
       }
     }
 
-    // ── Back walls ────────────────────────────────────────────────────
-    // Back-right wall at row=-1 (spans all columns)
-    for (int c = 0; c < roomCols; c++) {
-      world.add(WallTile(col: c, row: -1, side: WallSide.back));
-    }
-    // Back-left wall at col=-1 (spans all rows)
-    for (int r = 0; r < roomRows; r++) {
-      world.add(WallTile(col: -1, row: r, side: WallSide.left));
-    }
+    // ── Back walls (one continuous panel per side) ───────────────────
+    world.add(WallTile(side: WallSide.backRight));
+    world.add(WallTile(side: WallSide.backLeft));
 
     // ── My avatar ────────────────────────────────────────────────────
     _myAvatar = AvatarComponent(

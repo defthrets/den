@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Den — preview</title>
+<style>
+  :root {
+    --bg: #0D1117;
+    --surface: #161B22;
+    --surface-alt: #21262D;
+    --border: #30363D;
+    --accent: #F5A623;
+    --text: #E6EDF3;
+    --text-muted: #8B949E;
+    --sky-top: #1A2744;
+    --sky-bottom: #2D4A7A;
+    --bubble-me: #1F3A5F;
+    --bubble-them: #21262D;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    height: 100%;
+    background: #000;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: var(--text);
+    overflow: hidden;
+  }
+  /* Phone frame — mimics iPhone proportions so the preview feels like a real device */
+  .phone {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+      radial-gradient(ellipse at top, #1c1f2e 0%, #07090f 70%);
+  }
+  .screen {
+    width: 390px;
+    height: 844px;
+    max-width: 100vw;
+    max-height: 100vh;
+    border-radius: 44px;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg);
+    box-shadow:
+      0 0 0 6px #1a1a1f,
+      0 0 0 8px #2a2a30,
+      0 20px 60px rgba(0,0,0,0.6);
+  }
+  .sky {
+    position: absolute; inset: 0;
+    background: linear-gradient(to bottom, var(--sky-top), var(--sky-bottom));
+  }
+  canvas#room {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    touch-action: none;
+  }
+
+  /* ── Top bar ────────────────────────────────────────── */
+  .topbar {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    padding: 14px 16px 8px;
+    display: flex; align-items: center;
+    gap: 10px;
+    z-index: 2;
+  }
+  .icon-btn {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: rgba(22,27,34,0.85);
+    border: 1px solid rgba(48,54,61,0.6);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .room-chip {
+    padding: 6px 12px;
+    background: rgba(22,27,34,0.85);
+    border: 1px solid rgba(48,54,61,0.6);
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .room-chip .home { color: var(--accent); }
+
+  /* ── Chat overlay ───────────────────────────────────── */
+  .chat {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.4);
+    transition: height 280ms cubic-bezier(.4,0,.2,1);
+    height: 56px;
+    overflow: hidden;
+    z-index: 3;
+  }
+  .chat.expanded { height: 380px; }
+  .chat-handle {
+    height: 56px;
+    padding: 0 16px;
+    display: flex; align-items: center; gap: 12px;
+    cursor: pointer;
+  }
+  .pill {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+  }
+  .friend-name { font-weight: 600; font-size: 14px; }
+  .e2e {
+    margin-left: auto;
+    color: var(--accent);
+    font-size: 11px;
+    opacity: 0.8;
+  }
+  .lock { color: var(--accent); font-size: 12px; }
+
+  .messages {
+    height: 264px;
+    padding: 4px 12px;
+    overflow-y: auto;
+  }
+  .bubble {
+    max-width: 72%;
+    padding: 8px 12px;
+    border-radius: 16px;
+    margin: 3px 0;
+    font-size: 14px;
+    line-height: 1.35;
+    word-wrap: break-word;
+  }
+  .bubble.me  { background: var(--bubble-me);   margin-left: auto;  border-bottom-right-radius: 4px; }
+  .bubble.them{ background: var(--bubble-them); margin-right: auto; border-bottom-left-radius: 4px; }
+
+  .input-bar {
+    height: 60px;
+    padding: 8px;
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface);
+  }
+  .input-bar input {
+    flex: 1;
+    background: var(--surface-alt);
+    border: none;
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 24px;
+    font-size: 14px;
+    outline: none;
+  }
+  .send {
+    width: 40px; height: 40px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    color: #000;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  /* Status label below the device for context */
+  .meta {
+    position: fixed; bottom: 12px; left: 0; right: 0;
+    text-align: center;
+    color: #888;
+    font-size: 11px;
+    letter-spacing: 0.5px;
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="screen">
+    <div class="sky"></div>
+    <canvas id="room" width="390" height="844"></canvas>
+
+    <div class="topbar">
+      <div class="icon-btn" id="back">&lt;</div>
+      <div class="room-chip">
+        <span class="home">⌂</span>
+        <span>demo_friend's den</span>
+      </div>
+      <div style="flex:1"></div>
+      <div class="icon-btn" id="profile">●</div>
+    </div>
+
+    <div class="chat" id="chat">
+      <div class="chat-handle" id="chatHandle">
+        <div class="pill"></div>
+        <span class="lock">🔒</span>
+        <span class="friend-name">demo_friend</span>
+        <span class="e2e">E2E encrypted</span>
+      </div>
+      <div class="messages" id="messages">
+        <div class="bubble them">Hey! Welcome to my den :)</div>
+        <div class="bubble me">Looking good in here!</div>
+      </div>
+      <div class="input-bar">
+        <input id="msgInput" type="text" placeholder="Message..." />
+        <button class="send" id="sendBtn">→</button>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="meta">Tap a floor tile to walk. Tap the bottom bar to open chat.</div>
+
+<script src="renderer.js"></script>
+</body>
+</html>
