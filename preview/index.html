@@ -93,72 +93,35 @@
   }
   .room-chip .home { color: var(--accent); }
 
-  /* ── Chat overlay ───────────────────────────────────── */
-  .chat {
+  /* ── Slim chat input bar (always visible) ───────────────────── */
+  .input-bar {
     position: absolute;
     bottom: 0; left: 0; right: 0;
-    background: var(--surface);
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0 -4px 16px rgba(0,0,0,0.4);
-    transition: height 280ms cubic-bezier(.4,0,.2,1);
     height: 56px;
-    overflow: hidden;
-    z-index: 3;
-  }
-  .chat.expanded { height: 380px; }
-  .chat-handle {
-    height: 56px;
-    padding: 0 16px;
-    display: flex; align-items: center; gap: 12px;
-    cursor: pointer;
-  }
-  .pill {
-    width: 36px; height: 4px;
-    background: var(--border);
-    border-radius: 2px;
-  }
-  .friend-name { font-weight: 600; font-size: 14px; }
-  .e2e {
-    margin-left: auto;
-    color: var(--accent);
-    font-size: 11px;
-    opacity: 0.8;
-  }
-  .lock { color: var(--accent); font-size: 12px; }
-
-  .messages {
-    height: 264px;
-    padding: 4px 12px;
-    overflow-y: auto;
-  }
-  .bubble {
-    max-width: 72%;
-    padding: 8px 12px;
-    border-radius: 16px;
-    margin: 3px 0;
-    font-size: 14px;
-    line-height: 1.35;
-    word-wrap: break-word;
-  }
-  .bubble.me  { background: var(--bubble-me);   margin-left: auto;  border-bottom-right-radius: 4px; }
-  .bubble.them{ background: var(--bubble-them); margin-right: auto; border-bottom-left-radius: 4px; }
-
-  .input-bar {
-    height: 60px;
-    padding: 8px;
+    padding: 8px 10px;
     display: flex; align-items: center; gap: 8px;
     background: var(--surface);
+    border-top: 1px solid var(--border);
+    z-index: 3;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.35);
   }
+  .input-bar .lock { color: var(--accent); font-size: 12px; margin-left: 4px; }
   .input-bar input {
     flex: 1;
     background: var(--surface-alt);
-    border: none;
+    border: 1px solid transparent;
     color: var(--text);
-    padding: 10px 16px;
-    border-radius: 24px;
+    padding: 10px 14px;
+    border-radius: 22px;
     font-size: 14px;
     outline: none;
+    transition: border-color 150ms, background 150ms;
   }
+  .input-bar input:focus {
+    border-color: var(--accent);
+    background: #2a3038;
+  }
+  .input-bar input::placeholder { color: var(--text-muted); }
   .send {
     width: 40px; height: 40px;
     background: var(--accent);
@@ -168,7 +131,42 @@
     color: #000;
     cursor: pointer;
     font-weight: bold;
+    font-size: 18px;
   }
+  .send:active { transform: scale(0.94); }
+
+  /* ── Faux mobile keyboard (preview only) ──────────────────── */
+  .keyboard {
+    position: absolute;
+    left: 0; right: 0;
+    bottom: -300px;
+    height: 296px;
+    background: linear-gradient(to bottom, #2a2d33, #1a1c20);
+    border-top: 1px solid #000;
+    padding: 6px 4px 8px;
+    transition: bottom 240ms cubic-bezier(.4,0,.2,1);
+    z-index: 4;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .keyboard.open { bottom: 56px; }
+  .kbd-row {
+    display: flex; gap: 4px; justify-content: center;
+    flex: 1;
+  }
+  .key {
+    flex: 1;
+    max-width: 36px;
+    background: #4a4e57;
+    color: #fff;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 1px 0 #000;
+  }
+  .key.wide { max-width: 52px; }
+  .key.space { max-width: 180px; flex: 5; }
+  .key.dark { background: #2e3138; }
 
   /* Status label below the device for context */
   .meta {
@@ -196,20 +194,39 @@
       <div class="icon-btn" id="profile">●</div>
     </div>
 
-    <div class="chat" id="chat">
-      <div class="chat-handle" id="chatHandle">
-        <div class="pill"></div>
-        <span class="lock">🔒</span>
-        <span class="friend-name">demo_friend</span>
-        <span class="e2e">E2E encrypted</span>
+    <!-- Slim chat input bar — always visible -->
+    <div class="input-bar">
+      <span class="lock">🔒</span>
+      <input id="msgInput" type="text" placeholder="Say something..." />
+      <button class="send" id="sendBtn">→</button>
+    </div>
+
+    <!-- Faux mobile keyboard so the preview shows what real users will see -->
+    <div class="keyboard" id="keyboard">
+      <div class="kbd-row">
+        <div class="key">q</div><div class="key">w</div><div class="key">e</div>
+        <div class="key">r</div><div class="key">t</div><div class="key">y</div>
+        <div class="key">u</div><div class="key">i</div><div class="key">o</div>
+        <div class="key">p</div>
       </div>
-      <div class="messages" id="messages">
-        <div class="bubble them">Hey! Welcome to my den :)</div>
-        <div class="bubble me">Looking good in here!</div>
+      <div class="kbd-row">
+        <div class="key">a</div><div class="key">s</div><div class="key">d</div>
+        <div class="key">f</div><div class="key">g</div><div class="key">h</div>
+        <div class="key">j</div><div class="key">k</div><div class="key">l</div>
       </div>
-      <div class="input-bar">
-        <input id="msgInput" type="text" placeholder="Message..." />
-        <button class="send" id="sendBtn">→</button>
+      <div class="kbd-row">
+        <div class="key wide dark">⇧</div>
+        <div class="key">z</div><div class="key">x</div><div class="key">c</div>
+        <div class="key">v</div><div class="key">b</div><div class="key">n</div>
+        <div class="key">m</div>
+        <div class="key wide dark">⌫</div>
+      </div>
+      <div class="kbd-row">
+        <div class="key wide dark">123</div>
+        <div class="key dark">,</div>
+        <div class="key space">space</div>
+        <div class="key dark">.</div>
+        <div class="key wide dark">↵</div>
       </div>
     </div>
   </div>

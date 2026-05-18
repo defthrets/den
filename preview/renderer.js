@@ -580,27 +580,16 @@ canvas.addEventListener('pointerdown', (e) => {
   }
 });
 
-// ── Chat overlay interactions ──────────────────────────────────────────
-const chat       = document.getElementById('chat');
-const chatHandle = document.getElementById('chatHandle');
-const messages   = document.getElementById('messages');
-const input      = document.getElementById('msgInput');
-const sendBtn    = document.getElementById('sendBtn');
+// ── Chat input interactions ────────────────────────────────────────────
+const input    = document.getElementById('msgInput');
+const sendBtn  = document.getElementById('sendBtn');
+const keyboard = document.getElementById('keyboard');
 
-chatHandle.addEventListener('click', () => {
-  chat.classList.toggle('expanded');
-  if (chat.classList.contains('expanded')) {
-    setTimeout(() => input.focus(), 100);
-  }
-});
-
-function addBubble(text, isMe) {
-  const div = document.createElement('div');
-  div.className = 'bubble ' + (isMe ? 'me' : 'them');
-  div.textContent = text;
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
-}
+// Show the faux keyboard whenever the input is focused. On a real device,
+// the OS keyboard slides up and Flutter's MediaQuery.viewInsets handles
+// the layout shift — this is just the preview's visual surrogate.
+input.addEventListener('focus', () => keyboard.classList.add('open'));
+input.addEventListener('blur',  () => keyboard.classList.remove('open'));
 
 sendBtn.addEventListener('click', send);
 input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
@@ -608,15 +597,13 @@ input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
 function send() {
   const t = input.value.trim();
   if (!t) return;
-  addBubble(t, true);
   spawnBubble(me, t);
   input.value = '';
 
   // Demo friend echo
   setTimeout(() => {
-    const replies = ['cool', 'haha', 'nice', 'yeah?', 'love it'];
+    const replies = ['cool', 'haha', 'nice', 'yeah?', 'love it', 'totally', 'lol'];
     const reply = replies[Math.floor(Math.random() * replies.length)];
-    addBubble(reply, false);
     spawnBubble(friend, reply);
   }, 1200);
 }
