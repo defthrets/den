@@ -1,0 +1,130 @@
+import 'dart:ui';
+import 'package:flame/camera.dart';
+import 'package:flame/components.dart';
+import 'package:flame/events.dart';
+import 'package:flame/game.dart';
+import '../../core/constants.dart';
+import '../../core/iso_math.dart';
+import '../../core/palette.dart';
+import 'components/avatar_component.dart';
+import 'components/floor_tile.dart';
+import 'components/wall_tile.dart';
+
+/// Packet types sent over the room WebSocket.
+enum RoomPacketType { join, move, leave, avatarMoved, roomState, chat }
+
+class DenGame extends FlameGame with TapCallbacks {
+  final String roomOwnerId;
+  final String myUserId;
+
+  late AvatarComponent _myAvatar;
+  final Map<String, AvatarComponent> _avatars = {};
+
+  // Room screen bounds (pre-computed for camera centering)
+  // For a 10×8 room:
+  //   leftmost X  = -(roomRows-1)*32 - 32 = -256
+  //   rightmost X = (roomCols-1)*32 + 32  =  320
+  //   room width  = 576
+  //   top Y       = -16, bottom Y = (roomCols+roomRows-2)*16 + 16 = 272
+  //   room center = (32, 128)
+  static const double _roomCX = 32.0;
+  static const double _roomCY = 128.0;
+  static const double _roomW = 576.0;
+
+  DenGame({required this.roomOwnerId, required this.myUserId});
+
+  @override
+  Color backgroundColor() => DenPalette.skyBottom;
+
+  @override
+  Future<void> onLoad() async {
+    await super.onLoad();
+
+    // ── Floor ─────────────────────────────────────────────────────────
+    for (int r = 0; r < roomRows; r++) {
+      for (int c = 0; c < roomCols; c++) {
+        world.add(FloorTile(col: c, row: r, alt: (c + r) % 2 == 0));
+      }
+    }
+
+    // ── Back walls ────────────────────────────────────────────────────
+    // Back-right wall at row=-1 (spans all columns)
+    for (int c = 0; c < roomCols; c++) {
+      world.add(WallTile(col: c, row: -1, side: WallSide.back));
+    }
+    // Back-left wall at col=-1 (spans all rows)
+    for (int r = 0; r < roomRows; r++) {
+      world.add(WallTile(col: -1, row: r, side: WallSide.left));
+    }
+
+    // ── My avatar ────────────────────────────────────────────────────
+    _myAvatar = AvatarComponent(
+      col: 5,
+      row: 5,
+      isMe: true,
+      userId: myUserId,
+      config: const AvatarConfig(shirt: DenPalette.shirtBlue),
+    );
+    world.add(_myAvatar);
+    _avatars[myUserId] = _myAvatar;
+
+    // ── Friend avatar (demo — replace with server state) ──────────────
+    final friend = AvatarComponent(
+      col: 3,
+      row: 3,
+      isMe: false,
+      userId: roomOwnerId,
+      config: const AvatarConfig(
+        shirt: DenPalette.shirtRed,
+        hair: Color(0xFF1A1A6E),
+      ),
+    );
+    world.add(friend);
+    _avatars[roomOwnerId] = friend;
+
+    // ── Camera ────────────────────────────────────────────────────────
+    final zoom = (size.x * 0.92) / _roomW;
+    camera.viewfinder
+      ..anchor = Anchor.center
+      ..zoom = zoom
+      ..position = Vector2(_roomCX, _roomCY);
+  }
+
+  /// Tap on the floor -> move my avatar there.
+  @override
+  void onTapUp(TapUpEvent event) {
+    final worldPos = camera.viewfinder.globalToLocal(event.devicePosition);
+    final tile = screenToTile(worldPos.x, worldPos.y);
+    final tc = tile.dx.round();
+    final tr = tile.dy.round();
+
+    if (tc >= 0 && tc < roomCols && tr >= 0 && tr < roomRows) {
+      _myAvatar.walkTo(tc, tr);
+      // TODO: send move packet to server-rooms WebSocket
+    }
+  }
+
+  /// Called by the WebSocket layer when a remote avatar moves.
+  void onRemoteMove(String userId, int col, int row) {
+    _avatars[userId]?.walkTo(col, row);
+  }
+
+  /// Spawn or update a remote avatar (e.g. someone joining the room).
+  void onAvatarJoined(String userId, int col, int row, AvatarConfig config) {
+    if (_avatars.containsKey(userId)) return;
+    final avatar = AvatarComponent(
+      col: col,
+      row: row,
+      isMe: false,
+      userId: userId,
+      config: config,
+    );
+    world.add(avatar);
+    _avatars[userId] = avatar;
+  }
+
+  void onAvatarLeft(String userId) {
+    _avatars[userId]?.removeFromParent();
+    _avatars.remove(userId);
+  }
+}
