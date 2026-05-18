@@ -5,43 +5,42 @@
   },
   "_notes": [
     "rd_animation__small_sprites is 32x32 only and outputs a sheet containing:",
-    "  4-direction walking + arm movement + looking + surprised + laying down",
-    "  All on a transparent background.",
-    "Each call costs ~0.07 USD. Re-runs skipped unless --force.",
-    "rd_animation__walking_and_idle is intermittently 500-ing server-side — avoid for now."
+    "  4-direction walking + arm movement + looking + surprised + laying down.",
+    "  Each call costs ~0.07 USD. Re-runs skipped unless --force.",
+    "Prompts force chibi proportions (oversized head, small body) for the Habbo look."
   ],
   "presets": [
     {
       "id": "casual_blue",
-      "prompt": "young person, short brown hair, blue sweater, navy jeans, neutral expression, simple pixel art character",
+      "prompt": "chibi character, big round head, small body, short brown hair, blue sweater, navy jeans, friendly face, Habbo Hotel style",
       "style": "rd_animation__small_sprites",
       "width": 32,
       "height": 32,
-      "seed": 100
+      "seed": 200
     },
     {
       "id": "tank_redhead",
-      "prompt": "young person, long red hair, orange tank top, blue shorts, neutral expression, simple pixel art character",
+      "prompt": "chibi character, big round head, small body, long red hair, orange tank top, blue shorts, friendly face, Habbo Hotel style",
       "style": "rd_animation__small_sprites",
       "width": 32,
       "height": 32,
-      "seed": 101
+      "seed": 201
     },
     {
       "id": "punk_purple",
-      "prompt": "young person, short purple hair, dark grey jumper, black trousers, neutral expression, simple pixel art character",
+      "prompt": "chibi character, big round head, small body, short purple hair, dark grey jumper, black trousers, friendly face, Habbo Hotel style",
       "style": "rd_animation__small_sprites",
       "width": 32,
       "height": 32,
-      "seed": 102
+      "seed": 202
     },
     {
       "id": "summer_yellow",
-      "prompt": "young person, short blonde hair, yellow t-shirt, brown shorts, friendly expression, simple pixel art character",
+      "prompt": "chibi character, big round head, small body, short blonde hair, yellow t-shirt, brown shorts, friendly face, Habbo Hotel style",
       "style": "rd_animation__small_sprites",
       "width": 32,
       "height": 32,
-      "seed": 103
+      "seed": 203
     }
   ]
 }

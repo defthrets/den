@@ -40,7 +40,7 @@ const int _dirW = 3;
 class AvatarComponent extends PositionComponent with TapCallbacks {
   static const double frameW = 32;
   static const double frameH = 32;
-  static const double _avatarScale = 3.2; // Habbo-scale; character inside the 32x32 frame fills ~half the cell
+  static const double _avatarScale = 4.0; // Habbo-scale chunky avatars
   static const double walkDurationPerTile = 0.85;
   static const double walkFrameDuration = 0.22;
 
