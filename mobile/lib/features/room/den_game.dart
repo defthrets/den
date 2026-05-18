@@ -52,7 +52,7 @@ class DenGame extends FlameGame with TapCallbacks {
       row: 5,
       isMe: true,
       userId: myUserId,
-      config: const AvatarConfig(shirt: DenPalette.shirtBlue),
+      config: const AvatarConfig(preset: 'casual_blue'),
     );
     world.add(_myAvatar);
     _avatars[myUserId] = _myAvatar;
@@ -63,10 +63,7 @@ class DenGame extends FlameGame with TapCallbacks {
       row: 3,
       isMe: false,
       userId: roomOwnerId,
-      config: const AvatarConfig(
-        shirt: DenPalette.shirtRed,
-        hair: Color(0xFF1A1A6E),
-      ),
+      config: const AvatarConfig(preset: 'tank_redhead'),
     );
     world.add(friend);
     _avatars[roomOwnerId] = friend;

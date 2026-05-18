@@ -13,17 +13,13 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- ── Avatar customisation ──────────────────────────────────────────────────
--- All colour values are hex strings (#RRGGBB). Style IDs reference sprite sheets.
+-- `preset` references a Retro-Diffusion-generated sprite sheet bundled with
+-- the client at assets/sprites/<preset>.png. Colour and style choices are
+-- baked into the sheet at generation time.
 CREATE TABLE IF NOT EXISTS avatar_configs (
-  user_id       UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  skin_color    TEXT NOT NULL DEFAULT '#FFCC99',
-  hair_style    SMALLINT NOT NULL DEFAULT 0,
-  hair_color    TEXT NOT NULL DEFAULT '#4A3728',
-  shirt_style   SMALLINT NOT NULL DEFAULT 0,
-  shirt_color   TEXT NOT NULL DEFAULT '#4488CC',
-  pants_style   SMALLINT NOT NULL DEFAULT 0,
-  pants_color   TEXT NOT NULL DEFAULT '#2244AA',
-  updated_at    TIMESTAMPTZ DEFAULT NOW()
+  user_id    UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  preset     TEXT NOT NULL DEFAULT 'casual_blue',
+  updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- ── Room layout ───────────────────────────────────────────────────────────

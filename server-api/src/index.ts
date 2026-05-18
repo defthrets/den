@@ -81,9 +81,7 @@ async function main() {
     { preHandler: [app.authenticate] },
     async (req: any) => {
       const { rows } = await db.query(
-        `SELECT u.id, u.username, u.display_name,
-                a.skin_color, a.hair_style, a.hair_color,
-                a.shirt_style, a.shirt_color, a.pants_style, a.pants_color
+        `SELECT u.id, u.username, u.display_name, a.preset
          FROM users u
          JOIN avatar_configs a ON a.user_id = u.id
          WHERE u.id = $1`,
@@ -93,15 +91,13 @@ async function main() {
     },
   );
 
-  // ── GET /users/:id/avatar — public avatar config (for rendering peers) ─
+  // ── GET /users/:id/avatar — public avatar preset (for rendering peers) ─
   app.get<{ Params: { id: string } }>(
     '/users/:id/avatar',
     { preHandler: [app.authenticate] },
     async (req, reply) => {
       const { rows } = await db.query(
-        `SELECT u.id, u.username,
-                a.skin_color, a.hair_style, a.hair_color,
-                a.shirt_style, a.shirt_color, a.pants_style, a.pants_color
+        `SELECT u.id, u.username, a.preset
          FROM users u
          JOIN avatar_configs a ON a.user_id = u.id
          WHERE u.id = $1`,
@@ -112,52 +108,35 @@ async function main() {
     },
   );
 
-  // ── GET /catalog/wardrobe — available styles + colour palettes ───────────
-  // Public. Style IDs map to client-side templates today; when we ship real
-  // sprite sheets this will list asset URLs per id.
+  // ── GET /catalog/wardrobe — available avatar presets ─────────────────────
+  // Each preset corresponds to a Retro-Diffusion-generated sprite sheet
+  // bundled with the client at assets/sprites/<id>.png. The server only
+  // tracks the id (in avatar_configs.preset) — colours/styles are baked
+  // into the sprite at generation time.
   app.get('/catalog/wardrobe', async () => ({
-    hairStyles: [
-      { id: 0, name: 'Short' },
-      { id: 1, name: 'Long' },
+    presets: [
+      { id: 'casual_blue',   name: 'Casual' },
+      { id: 'tank_redhead',  name: 'Tank' },
+      { id: 'punk_purple',   name: 'Punk' },
+      { id: 'summer_yellow', name: 'Summer' },
     ],
-    shirtStyles: [
-      { id: 0, name: 'Sweater' },
-      { id: 1, name: 'Tank' },
-    ],
-    pantsStyles: [
-      { id: 0, name: 'Jeans' },
-      { id: 1, name: 'Shorts' },
-    ],
-    skinTones:   ['#FFCC99', '#E8A87C', '#B97A56', '#8B5A3C', '#FFE2C2'],
-    hairColors:  ['#4A3728', '#1A1A1A', '#E8C275', '#CC4444', '#8B6F50', '#666666', '#7C4A95', '#1A1A6E'],
-    shirtColors: ['#4488CC', '#CC4444', '#44CC44', '#CC9944', '#CC44CC', '#F5A623', '#333333', '#EEEEEE'],
-    pantsColors: ['#2244AA', '#333344', '#666666', '#8B5A3C', '#000000', '#22AA44'],
   }));
 
   // ── PUT /users/me/avatar ─────────────────────────────────────────────────
-  app.put<{
-    Body: {
-      skinColor?: string; hairStyle?: number; hairColor?: string;
-      shirtStyle?: number; shirtColor?: string; pantsStyle?: number; pantsColor?: string;
-    };
-  }>(
+  app.put<{ Body: { preset?: string } }>(
     '/users/me/avatar',
     { preHandler: [app.authenticate] },
-    async (req: any) => {
-      const { skinColor, hairStyle, hairColor, shirtStyle, shirtColor, pantsStyle, pantsColor } =
-        req.body;
+    async (req: any, reply) => {
+      const { preset } = req.body;
+      if (!preset || typeof preset !== 'string') {
+        return reply.status(400).send({ error: 'preset is required' });
+      }
+      // TODO: validate preset is in /catalog/wardrobe.presets
       await db.query(
-        `UPDATE avatar_configs SET
-           skin_color  = COALESCE($2, skin_color),
-           hair_style  = COALESCE($3, hair_style),
-           hair_color  = COALESCE($4, hair_color),
-           shirt_style = COALESCE($5, shirt_style),
-           shirt_color = COALESCE($6, shirt_color),
-           pants_style = COALESCE($7, pants_style),
-           pants_color = COALESCE($8, pants_color),
-           updated_at  = NOW()
+        `UPDATE avatar_configs
+         SET preset = $2, updated_at = NOW()
          WHERE user_id = $1`,
-        [req.user.sub, skinColor, hairStyle, hairColor, shirtStyle, shirtColor, pantsStyle, pantsColor],
+        [req.user.sub, preset],
       );
       return { ok: true };
     },

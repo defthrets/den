@@ -9,11 +9,19 @@ const TILE_H_HALF = TILE_H / 2;
 const ROOM_COLS = 10;
 const ROOM_ROWS = 8;
 
-const AVATAR_SCALE_BOOST = 1.5;   // avatars are slightly oversized vs tiles (Habbo trick)
+const AVATAR_SCALE_BOOST = 2.0;   // sprite frames are 32x32, scale up for visibility
 
-const WALK_DURATION = 0.85;        // seconds per tile (slower, calmer pace)
-const BUBBLE_LIFETIME = 4.5;       // seconds before bubble vanishes
-const BUBBLE_RISE_SPEED = 26;      // px/s upward drift
+// Sprite sheet layout (rd_animation__small_sprites): 5 cols × 4 rows of 32×32 frames.
+// Rows = facing direction (S, E, N, W). Cols 0-1 = walk cycle, col 2 = arm wave,
+// col 3 = looking, col 4 = surprised / lay down.
+const FRAME_W = 32;
+const FRAME_H = 32;
+const DIR_S = 0, DIR_E = 1, DIR_N = 2, DIR_W = 3;
+
+const WALK_DURATION = 0.85;        // seconds per tile
+const WALK_FRAME_DURATION = 0.22;  // seconds per walk-cycle frame
+const BUBBLE_LIFETIME = 4.5;
+const BUBBLE_RISE_SPEED = 26;
 
 const PAL = {
   skyTop:        '#1A2744',
@@ -160,8 +168,8 @@ const ROOM_W = 576;
 const FACE_H = 5;
 const WALL_H = 64;
 
-const me     = makeAvatar('me',     5, 5, true,  { hair: '#4A3728', skin: '#FFCC99', shirt: '#4488CC', pants: '#2244AA', hairStyle: 0, shirtStyle: 0, pantsStyle: 0 });
-const friend = makeAvatar('friend', 3, 3, false, { hair: '#1A1A6E', skin: '#FFCC99', shirt: '#CC4444', pants: '#333344', hairStyle: 1, shirtStyle: 1, pantsStyle: 1 });
+const me     = makeAvatar('me',     5, 5, true,  { preset: 'casual_blue' });
+const friend = makeAvatar('friend', 3, 3, false, { preset: 'tank_redhead' });
 const avatars = [me, friend];
 
 const bubbles = [];
@@ -171,9 +179,20 @@ function makeAvatar(userId, col, row, isMe, cfg) {
     userId, col, row, isMe, cfg,
     state: 'idle', target: null, walkT: 0, bob: Math.random() * Math.PI * 2,
     sprite: null,
+    direction: DIR_S,
+    walkFrame: 0,
+    walkFrameTimer: 0,
   };
-  a.sprite = buildAvatarSprite(cfg);
+  a.sprite = new Image();
+  a.sprite.src = `sprites/${cfg.preset}.png`;
   return a;
+}
+
+function directionFromMovement(dcol, drow) {
+  if (Math.abs(dcol) >= Math.abs(drow)) {
+    return dcol >= 0 ? DIR_E : DIR_W;
+  }
+  return drow >= 0 ? DIR_S : DIR_N;
 }
 
 // ── Layout ───────────────────────────────────────────────────────────────
@@ -312,13 +331,15 @@ function avatarWorldPos(a) {
 }
 
 function drawAvatar(a) {
+  if (!a.sprite.complete || a.sprite.naturalWidth === 0) return;
+
   const { x: wx, y: wy } = avatarWorldPos(a);
   const { sx, sy } = worldToScreen(wx, wy);
   const scale = zoom * AVATAR_SCALE_BOOST;
-  const w = AVATAR_W * scale;
-  const h = AVATAR_H * scale;
+  const w = FRAME_W * scale;
+  const h = FRAME_H * scale;
 
-  // Soft shadow
+  // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.28)';
   ctx.beginPath();
   ctx.ellipse(sx, sy - 1, 9 * scale, 2.6 * scale, 0, 0, Math.PI * 2);
@@ -327,10 +348,18 @@ function drawAvatar(a) {
   // Idle bob
   const bob = a.state === 'idle' ? Math.sin(a.bob) * 0.5 * scale : 0;
 
-  ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(a.sprite, Math.round(sx - w / 2), Math.round(sy - h + bob), Math.round(w), Math.round(h));
+  // Pick the right cell from the sheet
+  const frameCol = a.state === 'walking' ? a.walkFrame : 0;
+  const frameRow = a.direction;
 
-  // Username dot
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(
+    a.sprite,
+    frameCol * FRAME_W, frameRow * FRAME_H, FRAME_W, FRAME_H,
+    Math.round(sx - w / 2), Math.round(sy - h + bob), Math.round(w), Math.round(h),
+  );
+
+  // Username dot above head
   ctx.fillStyle = a.isMe ? PAL.accent : PAL.friendDot;
   ctx.beginPath();
   ctx.arc(sx, sy - h + bob - 5, 3 * Math.max(1, zoom), 0, Math.PI * 2);
@@ -341,7 +370,7 @@ function drawAvatar(a) {
 function spawnBubble(a, text) {
   const { x: wx, y: wy } = avatarWorldPos(a);
   const { sx, sy } = worldToScreen(wx, wy);
-  const headY = sy - AVATAR_H * zoom * AVATAR_SCALE_BOOST - 4;
+  const headY = sy - FRAME_H * zoom * AVATAR_SCALE_BOOST - 4;
 
   // Push older bubbles from this avatar higher to stack neatly
   for (const b of bubbles) {
@@ -471,9 +500,21 @@ function frame(dtMs) {
     a.bob += dt * 2.5;
     if (a.state === 'walking' && a.target) {
       a.walkT = Math.min(1, a.walkT + dt / WALK_DURATION);
+
+      // Update facing from the movement vector
+      a.direction = directionFromMovement(a.target.col - a.col, a.target.row - a.row);
+
+      // Cycle the walk frame (cols 0 ↔ 1)
+      a.walkFrameTimer += dt;
+      if (a.walkFrameTimer >= WALK_FRAME_DURATION) {
+        a.walkFrame = 1 - a.walkFrame;
+        a.walkFrameTimer = 0;
+      }
+
       if (a.walkT >= 1) {
         a.col = a.target.col; a.row = a.target.row;
         a.target = null; a.state = 'idle'; a.walkT = 0;
+        a.walkFrame = 0; a.walkFrameTimer = 0;
       }
     }
   }
@@ -566,13 +607,19 @@ setTimeout(() => spawnBubble(friend, 'hey welcome to my den :)'), 600);
 
 // ── Expose helpers for the customiser modal ───────────────────────────
 window.den = {
-  WARDROBE,
   me,
   friend,
-  buildAvatarSprite,
-  AVATAR_W,
-  AVATAR_H,
-  rebuildSprite(avatar) {
-    avatar.sprite = buildAvatarSprite(avatar.cfg);
+  presets: [
+    { id: 'casual_blue',   name: 'Casual' },
+    { id: 'tank_redhead',  name: 'Tank'   },
+    { id: 'punk_purple',   name: 'Punk'   },
+    { id: 'summer_yellow', name: 'Summer' },
+  ],
+  FRAME_W,
+  FRAME_H,
+  setPreset(avatar, presetId) {
+    avatar.cfg = { ...avatar.cfg, preset: presetId };
+    avatar.sprite = new Image();
+    avatar.sprite.src = `sprites/${presetId}.png`;
   },
 };

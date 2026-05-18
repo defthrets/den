@@ -1,91 +1,48 @@
 import 'dart:async';
 import 'dart:math';
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flutter/painting.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import '../../../core/iso_math.dart';
 import '../../../core/palette.dart';
-import '../../avatar/wardrobe.dart';
 
-/// Wardrobe slot: colours + style ids. Style ids reference [Wardrobe.hair],
-/// [Wardrobe.shirt], [Wardrobe.pants]. Same shape as the rows returned by
-/// `GET /users/:id/avatar`.
+/// Avatar configuration. Sprite-based: a preset id picks one of the
+/// generated sprite sheets in assets/sprites/. Colour tinting is
+/// baked into the sheet itself — no runtime palette swapping.
 class AvatarConfig {
-  final Color skin;
-  final Color hair;
-  final Color shirt;
-  final Color pants;
-  final int hairStyle;
-  final int shirtStyle;
-  final int pantsStyle;
+  final String preset;
+  const AvatarConfig({this.preset = 'casual_blue'});
 
-  const AvatarConfig({
-    this.skin = DenPalette.skinA,
-    this.hair = DenPalette.hairBrown,
-    this.shirt = DenPalette.shirtBlue,
-    this.pants = DenPalette.pantsNavy,
-    this.hairStyle = 0,
-    this.shirtStyle = 0,
-    this.pantsStyle = 0,
-  });
+  AvatarConfig copyWith({String? preset}) =>
+      AvatarConfig(preset: preset ?? this.preset);
 
-  AvatarConfig copyWith({
-    Color? skin, Color? hair, Color? shirt, Color? pants,
-    int? hairStyle, int? shirtStyle, int? pantsStyle,
-  }) =>
-      AvatarConfig(
-        skin: skin ?? this.skin,
-        hair: hair ?? this.hair,
-        shirt: shirt ?? this.shirt,
-        pants: pants ?? this.pants,
-        hairStyle: hairStyle ?? this.hairStyle,
-        shirtStyle: shirtStyle ?? this.shirtStyle,
-        pantsStyle: pantsStyle ?? this.pantsStyle,
-      );
+  factory AvatarConfig.fromJson(Map<String, dynamic> j) =>
+      AvatarConfig(preset: (j['preset'] as String?) ?? 'casual_blue');
 
-  /// Parse a row from `/users/:id/avatar` or `/users/me`.
-  factory AvatarConfig.fromJson(Map<String, dynamic> j) => AvatarConfig(
-        skin: _parse(j['skin_color']),
-        hair: _parse(j['hair_color']),
-        shirt: _parse(j['shirt_color']),
-        pants: _parse(j['pants_color']),
-        hairStyle:  (j['hair_style']  as num?)?.toInt() ?? 0,
-        shirtStyle: (j['shirt_style'] as num?)?.toInt() ?? 0,
-        pantsStyle: (j['pants_style'] as num?)?.toInt() ?? 0,
-      );
-
-  Map<String, dynamic> toServerPayload() => {
-        'skinColor': _hex(skin),
-        'hairColor': _hex(hair),
-        'shirtColor': _hex(shirt),
-        'pantsColor': _hex(pants),
-        'hairStyle': hairStyle,
-        'shirtStyle': shirtStyle,
-        'pantsStyle': pantsStyle,
-      };
+  Map<String, dynamic> toServerPayload() => {'preset': preset};
 }
-
-Color _parse(dynamic v) {
-  if (v is! String) return const Color(0xFFFFCC99);
-  var s = v.startsWith('#') ? v.substring(1) : v;
-  if (s.length == 6) s = 'FF$s';
-  return Color(int.parse(s, radix: 16));
-}
-
-String _hex(Color c) =>
-    '#${c.red.toRadixString(16).padLeft(2, '0')}'
-    '${c.green.toRadixString(16).padLeft(2, '0')}'
-    '${c.blue.toRadixString(16).padLeft(2, '0')}';
 
 enum AvatarState { idle, walking }
 
-/// Layered sprite-based avatar. Composes body + hair + shirt + pants
-/// templates into a single ui.Image at config-change time and blits it.
+/// 4 facing directions match the sprite-sheet row order from
+/// `rd_animation__small_sprites`: row 0 = south, 1 = east, 2 = north,
+/// 3 = west.
+const int _dirS = 0;
+const int _dirE = 1;
+const int _dirN = 2;
+const int _dirW = 3;
+
+/// Sprite-sheet-based avatar. The sheet is 5 cols × 4 rows of 32×32
+/// frames. Cols 0 and 1 are the walking cycle (we alternate while
+/// `state == walking`). Col 0 is idle. The row picks facing direction.
 class AvatarComponent extends PositionComponent with TapCallbacks {
-  static const double _avatarScale = 1.5;
+  static const double frameW = 32;
+  static const double frameH = 32;
+  static const double _avatarScale = 2.0;
   static const double walkDurationPerTile = 0.85;
+  static const double walkFrameDuration = 0.22;
 
   int col;
   int row;
@@ -93,13 +50,17 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
   final String userId;
   AvatarConfig _config;
 
-  ui.Image? _sprite;
+  ui.Image? _sheet;
 
   AvatarState _state = AvatarState.idle;
   int _targetCol = 0;
   int _targetRow = 0;
   double _walkProgress = 0;
   double _bobPhase = 0;
+
+  int _direction = _dirS;
+  int _walkFrame = 0;
+  double _walkFrameTimer = 0;
 
   AvatarComponent({
     required this.col,
@@ -109,7 +70,7 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
     AvatarConfig? config,
   })  : _config = config ?? const AvatarConfig(),
         super(
-          size: Vector2(avatarTplW * _avatarScale, avatarTplH * _avatarScale),
+          size: Vector2(frameW * _avatarScale, frameH * _avatarScale),
           anchor: Anchor.bottomCenter,
           priority: tileDepth(col, row) + 5,
         ) {
@@ -119,15 +80,14 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
 
   AvatarConfig get config => _config;
 
-  /// Swap config and rebuild the cached sprite asynchronously.
-  Future<void> updateConfig(AvatarConfig next) async {
-    _config = next;
-    _sprite = await buildAvatarSprite(next);
-  }
-
   @override
   Future<void> onLoad() async {
-    _sprite = await buildAvatarSprite(_config);
+    _sheet = await loadSpriteSheet(_config.preset);
+  }
+
+  Future<void> updateConfig(AvatarConfig next) async {
+    _config = next;
+    _sheet = await loadSpriteSheet(next.preset);
   }
 
   void _syncPosition() {
@@ -141,6 +101,12 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
     _targetRow = targetRow;
     _state = AvatarState.walking;
     _walkProgress = 0;
+    _walkFrame = 0;
+    _walkFrameTimer = 0;
+    _direction = _directionFromMovement(
+      _targetCol - col,
+      _targetRow - row,
+    );
   }
 
   Vector2 headWorldPosition() => Vector2(position.x, position.y - size.y);
@@ -150,6 +116,13 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
     _bobPhase += dt * 2.5;
     if (_state == AvatarState.walking) {
       _walkProgress = min(1.0, _walkProgress + dt / walkDurationPerTile);
+
+      _walkFrameTimer += dt;
+      if (_walkFrameTimer >= walkFrameDuration) {
+        _walkFrame = 1 - _walkFrame;
+        _walkFrameTimer = 0;
+      }
+
       final fromS = tileToScreen(col, row);
       final toS = tileToScreen(_targetCol, _targetRow);
       final t = _easeInOut(_walkProgress);
@@ -161,6 +134,8 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
         col = _targetCol;
         row = _targetRow;
         _state = AvatarState.idle;
+        _walkFrame = 0;
+        _walkFrameTimer = 0;
         _syncPosition();
       }
     }
@@ -168,7 +143,8 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
 
   @override
   void render(Canvas canvas) {
-    if (_sprite == null) return;
+    if (_sheet == null) return;
+
     final bob = _state == AvatarState.idle ? sin(_bobPhase) * 0.6 : 0.0;
 
     canvas.drawOval(
@@ -180,11 +156,14 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
       Paint()..color = const Color(0x47000000),
     );
 
+    final frameCol = _state == AvatarState.walking ? _walkFrame : 0;
+    final frameRow = _direction;
+
     canvas.save();
     canvas.translate(0, bob);
     canvas.drawImageRect(
-      _sprite!,
-      Rect.fromLTWH(0, 0, avatarTplW.toDouble(), avatarTplH.toDouble()),
+      _sheet!,
+      Rect.fromLTWH(frameCol * frameW, frameRow * frameH, frameW, frameH),
       Rect.fromLTWH(0, 0, size.x, size.y),
       Paint()..filterQuality = FilterQuality.none,
     );
@@ -197,120 +176,22 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
     );
   }
 
+  static int _directionFromMovement(int dcol, int drow) {
+    if (dcol.abs() >= drow.abs()) {
+      return dcol >= 0 ? _dirE : _dirW;
+    }
+    return drow >= 0 ? _dirS : _dirN;
+  }
+
   static double _easeInOut(double t) =>
       t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// Sprite compositor — public so the customiser preview can call it too.
-// ─────────────────────────────────────────────────────────────────────────
-
-String _at(List<String> tpl, int x, int y) {
-  if (y < 0 || y >= tpl.length) return '.';
-  final row = tpl[y];
-  if (x < 0 || x >= row.length) return '.';
-  return row[x];
-}
-
-String _composedCharAt(int x, int y, AvatarConfig cfg) {
-  final hair  = Wardrobe.hair[cfg.hairStyle].template;
-  final shirt = Wardrobe.shirt[cfg.shirtStyle].template;
-  final pants = Wardrobe.pants[cfg.pantsStyle].template;
-
-  var ch = _at(hair, x, y);  if (ch != '.') return ch;
-  ch     = _at(shirt, x, y); if (ch != '.') return ch;
-  ch     = _at(pants, x, y); if (ch != '.') return ch;
-  return _at(bodyBase, x, y);
-}
-
-List<int>? _resolveColor(String ch, AvatarConfig cfg) {
-  switch (ch) {
-    case '.':
-      return null;
-    case 'o':
-      return const [0, 0, 0, 255];
-    case 'H':
-      return _rgba(cfg.hair);
-    case 'h':
-      return _rgba(_darken(cfg.hair, 0.30));
-    case 'l':
-      return _rgba(_lighten(cfg.hair, 0.25));
-    case 'S':
-      return _rgba(cfg.skin);
-    case 's':
-      return _rgba(_darken(cfg.skin, 0.20));
-    case 'L':
-      return _rgba(_lighten(cfg.skin, 0.18));
-    case 'e':
-      return const [26, 26, 46, 255];
-    case 'w':
-      return const [255, 255, 255, 255];
-    case 'B':
-      return const [58, 40, 32, 255];
-    case 'M':
-      return const [204, 102, 119, 255];
-    case '1':
-      return _rgba(cfg.shirt);
-    case '2':
-      return _rgba(_darken(cfg.shirt, 0.22));
-    case '3':
-      return _rgba(_lighten(cfg.shirt, 0.18));
-    case 'c':
-      return _rgba(cfg.skin);
-    case 'P':
-      return _rgba(cfg.pants);
-    case 'p':
-      return _rgba(_darken(cfg.pants, 0.22));
-    case 'X':
-      return const [42, 42, 42, 255];
-    case 'x':
-      return const [22, 22, 22, 255];
-    default:
-      return null;
-  }
-}
-
-List<int> _rgba(Color c) => [c.red, c.green, c.blue, c.alpha];
-
-Color _darken(Color c, double amt) => Color.fromARGB(
-      c.alpha,
-      ((c.red * (1 - amt)).clamp(0, 255)).round(),
-      ((c.green * (1 - amt)).clamp(0, 255)).round(),
-      ((c.blue * (1 - amt)).clamp(0, 255)).round(),
-    );
-
-Color _lighten(Color c, double amt) => Color.fromARGB(
-      c.alpha,
-      ((c.red + (255 - c.red) * amt).clamp(0, 255)).round(),
-      ((c.green + (255 - c.green) * amt).clamp(0, 255)).round(),
-      ((c.blue + (255 - c.blue) * amt).clamp(0, 255)).round(),
-    );
-
-/// Build a fresh ui.Image for [cfg]. Compositing is done at pixel level
-/// (hair > shirt > pants > body) into raw RGBA bytes, then handed to
-/// `ui.decodeImageFromPixels`.
-Future<ui.Image> buildAvatarSprite(AvatarConfig cfg) async {
-  final pixels = Uint8List(avatarTplW * avatarTplH * 4);
-  for (int y = 0; y < avatarTplH; y++) {
-    for (int x = 0; x < avatarTplW; x++) {
-      final ch = _composedCharAt(x, y, cfg);
-      if (ch == '.') continue;
-      final rgba = _resolveColor(ch, cfg);
-      if (rgba == null) continue;
-      final idx = (y * avatarTplW + x) * 4;
-      pixels[idx]     = rgba[0];
-      pixels[idx + 1] = rgba[1];
-      pixels[idx + 2] = rgba[2];
-      pixels[idx + 3] = rgba[3];
-    }
-  }
+/// Loads a sprite sheet from `assets/sprites/<preset>.png` and returns
+/// a decoded [ui.Image]. Cached in the renderer's per-avatar `_sheet`.
+Future<ui.Image> loadSpriteSheet(String preset) async {
+  final data = await rootBundle.load('assets/sprites/$preset.png');
   final completer = Completer<ui.Image>();
-  ui.decodeImageFromPixels(
-    pixels,
-    avatarTplW,
-    avatarTplH,
-    ui.PixelFormat.rgba8888,
-    completer.complete,
-  );
+  ui.decodeImageFromList(data.buffer.asUint8List(), completer.complete);
   return completer.future;
 }
