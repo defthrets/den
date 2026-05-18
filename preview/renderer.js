@@ -9,7 +9,7 @@ const TILE_H_HALF = TILE_H / 2;
 const ROOM_COLS = 10;
 const ROOM_ROWS = 8;
 
-const AVATAR_SCALE_BOOST = 2.0;   // sprite frames are 32x32, scale up for visibility
+const AVATAR_SCALE_BOOST = 3.2;   // chunky Habbo-scale avatars; character inside the 32x32 frame fills roughly half the cell
 
 // Sprite sheet layout (rd_animation__small_sprites): 5 cols × 4 rows of 32×32 frames.
 // Rows = facing direction (S, E, N, W). Cols 0-1 = walk cycle, col 2 = arm wave,
