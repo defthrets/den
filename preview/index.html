@@ -171,6 +171,129 @@
   .key.space { max-width: 180px; flex: 5; }
   .key.dark { background: #2e3138; }
 
+  /* ── Avatar customiser modal ───────────────────────────────────── */
+  .customiser {
+    position: absolute;
+    inset: 0;
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(4px);
+    z-index: 10;
+    display: flex; flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 280ms cubic-bezier(.4,0,.2,1);
+  }
+  .customiser.open { transform: translateY(0); }
+  .cust-header {
+    padding: 14px 16px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .cust-header .title {
+    font-weight: 600; font-size: 16px;
+    color: var(--text);
+  }
+  .cust-close {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text);
+    cursor: pointer; font-size: 16px;
+  }
+  .cust-save {
+    margin-left: auto;
+    padding: 7px 16px;
+    background: var(--accent);
+    color: #000;
+    border: none; border-radius: 16px;
+    font-weight: 700; font-size: 13px;
+    cursor: pointer;
+  }
+  .preview-stage {
+    height: 200px;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(to bottom, #20324a, #18223a);
+  }
+  canvas#avatarPreview {
+    image-rendering: pixelated; image-rendering: crisp-edges;
+    width: 160px; height: 280px;
+  }
+  .cust-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .cust-tab {
+    flex: 1;
+    padding: 12px 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+  }
+  .cust-tab.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+  .cust-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px 14px 24px;
+  }
+  .cust-section-label {
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 12px 0 8px;
+  }
+  .cust-section-label:first-child { margin-top: 0; }
+  .styles-row {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .style-chip {
+    flex: 0 0 auto;
+    background: var(--surface-alt);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 6px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    cursor: pointer;
+    transition: border-color 120ms, transform 120ms;
+  }
+  .style-chip.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .style-chip canvas {
+    width: 48px; height: 84px;
+    image-rendering: pixelated; image-rendering: crisp-edges;
+  }
+  .style-chip .lbl {
+    font-size: 11px; color: var(--text); font-weight: 500;
+  }
+  .colors-row {
+    display: flex; gap: 8px; flex-wrap: wrap;
+  }
+  .color-swatch {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    transition: transform 120ms, border-color 120ms;
+  }
+  .color-swatch.active {
+    border-color: var(--accent);
+    transform: scale(1.1);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  .profile-icon {
+    cursor: pointer;
+  }
+
   /* Status label below the device for context */
   .meta {
     position: fixed; bottom: 12px; left: 0; right: 0;
@@ -194,7 +317,26 @@
         <span>demo_friend's den</span>
       </div>
       <div style="flex:1"></div>
-      <div class="icon-btn" id="profile">●</div>
+      <div class="icon-btn profile-icon" id="profile" title="Customise avatar">●</div>
+    </div>
+
+    <!-- Avatar customiser modal -->
+    <div class="customiser" id="customiser">
+      <div class="cust-header">
+        <div class="cust-close" id="custClose">×</div>
+        <div class="title">My avatar</div>
+        <button class="cust-save" id="custSave">Save</button>
+      </div>
+      <div class="preview-stage">
+        <canvas id="avatarPreview" width="32" height="56"></canvas>
+      </div>
+      <div class="cust-tabs" id="custTabs">
+        <div class="cust-tab active" data-tab="hair">Hair</div>
+        <div class="cust-tab" data-tab="skin">Skin</div>
+        <div class="cust-tab" data-tab="shirt">Shirt</div>
+        <div class="cust-tab" data-tab="pants">Pants</div>
+      </div>
+      <div class="cust-content" id="custContent"></div>
     </div>
 
     <!-- Slim chat input bar — always visible -->
@@ -236,6 +378,8 @@
 </div>
 <div class="meta">Tap a floor tile to walk. Tap the bottom bar to open chat.</div>
 
+<script src="wardrobe.js"></script>
 <script src="renderer.js"></script>
+<script src="customiser.js"></script>
 </body>
 </html>

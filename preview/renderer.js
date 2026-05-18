@@ -9,8 +9,6 @@ const TILE_H_HALF = TILE_H / 2;
 const ROOM_COLS = 10;
 const ROOM_ROWS = 8;
 
-const AVATAR_W = 32;
-const AVATAR_H = 56;
 const AVATAR_SCALE_BOOST = 1.5;   // avatars are slightly oversized vs tiles (Habbo trick)
 
 const WALK_DURATION = 0.85;        // seconds per tile (slower, calmer pace)
@@ -47,79 +45,13 @@ function screenToTile(sx, sy) {
 }
 function tileDepth(col, row) { return (col + row) * 10; }
 
-// ── Avatar pixel-art template ───────────────────────────────────────────
-// 32 wide × 56 tall. Each char is one design pixel.
-// Legend:
-//   .  transparent
-//   o  outline (very dark)
-//   H  hair main         h hair shadow         l hair highlight
-//   S  skin main         s skin shadow         L skin light/highlight
-//   e  eye pupil         w eye white           B brow / mouth shadow
-//   M  mouth (pink)
-//   1  shirt main        2 shirt shadow        3 shirt highlight
-//   c  collar (skin)
-//   P  pants main        p pants shadow
-//   X  shoe              x shoe sole / shadow
-const AVATAR_TEMPLATE = [
-//0         1         2         3
-//0123456789012345678901234567890 1
-  "................................", //  0
-  "............HHHHHHHH............", //  1
-  "..........HhhhhhhhhhhH..........", //  2
-  ".........HhhHHHHHHHHHHhhH.......", //  3 fringe top
-  "........HhHHHHHHHHHHHHHHhH......", //  4
-  ".......HhHHHHHHHHHHHHHHHHhH.....", //  5
-  ".......hHHHlHHHHHHHHHHHHHHh.....", //  6 hair highlight
-  "......hHHHHHHSSSSSSSSHHHHHHh....", //  7 fringe drops over forehead
-  "......hHHSSSSSSSSSSSSSSSSHHh....", //  8 hair sides
-  "......hHSSSSSSSSSSSSSSSSSSSh....", //  9
-  "......hSSBBBSSSSSSSSBBBSSSSh....", // 10 eyebrows
-  "......hSSeewwSSSSSSeewwSSSSh....", // 11 eyes (pupils + whites)
-  "......hSSeewwSSSSSSeewwSSSSh....", // 12
-  "......hSSSSSSSSSSSSSSSSSSSSh....", // 13
-  "......hSSSSSSSSSLLLSSSSSSSSh....", // 14 nose highlight
-  "......hSSSSSSSSLLLSSSSSSSSSh....", // 15
-  "......hSSSSSSSSSSSSSSSSSSSSh....", // 16
-  "......hSSSSSSMMMMMMMMSSSSSSh....", // 17 mouth
-  "......hSSSSSSBBBBBBBBSSSSSSh....", // 18 mouth shadow
-  "......hSSSSSSSSSSSSSSSSSSSSh....", // 19
-  ".......ssSSSSSSSSSSSSSSSSss.....", // 20 chin
-  "........sSSSSSSSSSSSSSSSs.......", // 21
-  "..........SSSSSSSSSSSSS.........", // 22 neck
-  "..........sSSSSSSSSSSs..........", // 23
-  ".........11ScccccccS11..........", // 24 collar V starts
-  "........1111ccccccc1111.........", // 25
-  ".......111111ccccc111111........", // 26
-  "......11111111ccc11111111.......", // 27
-  ".....1111111111c1111111111......", // 28 shoulders
-  "....S1111111111111111111111S....", // 29 arms (S = skin/sleeve edge)
-  "....S1111111122222222111111S....", // 30 shirt shading right side
-  "....S1111111122222222111111S....", // 31
-  "....S1111111122222222111111S....", // 32
-  "....S1111111122222222111111S....", // 33
-  "....S1111111122222222111111S....", // 34
-  "....S1111111122222222111111S....", // 35
-  "....S1111111122222222111111S....", // 36
-  "....S1111111122222222111111S....", // 37
-  "....S1111111122222222111111S....", // 38
-  "....s1111111122222222111111s....", // 39
-  "....sLL11111122222222111LLs.....", // 40 hands at the wrists
-  "....sLL11111122222222111LL......", // 41
-  ".....1111111122222222111........", // 42 shirt bottom narrows
-  "......11111122222222111.........", // 43
-  ".......PPPPPP....PPPPPP.........", // 44 legs split
-  ".......PPPPPP....PPPPPP.........", // 45
-  ".......PPPPPP....PPPPPP.........", // 46
-  ".......PPPPPP....PPPPPP.........", // 47
-  ".......PPPPPP....PPPPPP.........", // 48
-  ".......ppppPP....PPpppp.........", // 49 leg inner shadow
-  ".......ppppPP....PPpppp.........", // 50
-  "......XXXXXXXX..XXXXXXXX........", // 51 shoes
-  "......XXXXXXXX..XXXXXXXX........", // 52
-  "......xxxxxxxx..xxxxxxxx........", // 53 shoe sole
-  "................................", // 54
-  "................................", // 55
-];
+// ── Layered avatar rendering ────────────────────────────────────────────
+// Templates and catalog live in wardrobe.js. We compose body + hair +
+// shirt + pants at sprite-build time. AvatarConfig now carries style ids
+// alongside colours so two avatars can mix-and-match.
+// Dimensions of the design grid (wardrobe.js exposes the same as TPL_W/H)
+const AVATAR_W = TPL_W;
+const AVATAR_H = TPL_H;
 
 function parseHex(hex) {
   if (hex[0] === '#') hex = hex.slice(1);
@@ -172,7 +104,25 @@ function rgbaFromCss(css) {
   return [parseInt(m[1]), parseInt(m[2]), parseInt(m[3]), 255];
 }
 
-// Build an offscreen canvas with the avatar drawn at 1:1 pixel scale.
+function _at(tpl, x, y) {
+  const row = tpl[y];
+  if (!row) return '.';
+  return row[x] || '.';
+}
+
+// Compose hair > shirt > pants > body and return the first non-'.' char.
+function composedCharAt(x, y, cfg) {
+  const hairTpl  = WARDROBE.hair[cfg.hairStyle].template;
+  const shirtTpl = WARDROBE.shirt[cfg.shirtStyle].template;
+  const pantsTpl = WARDROBE.pants[cfg.pantsStyle].template;
+
+  let ch = _at(hairTpl, x, y);  if (ch !== '.') return ch;
+  ch     = _at(shirtTpl, x, y); if (ch !== '.') return ch;
+  ch     = _at(pantsTpl, x, y); if (ch !== '.') return ch;
+  return _at(WARDROBE.body, x, y);
+}
+
+// Build an offscreen canvas with the composed avatar at 1:1 pixel scale.
 function buildAvatarSprite(cfg) {
   const off = document.createElement('canvas');
   off.width = AVATAR_W;
@@ -181,9 +131,9 @@ function buildAvatarSprite(cfg) {
   const img = octx.createImageData(AVATAR_W, AVATAR_H);
 
   for (let y = 0; y < AVATAR_H; y++) {
-    const row = AVATAR_TEMPLATE[y] || '';
     for (let x = 0; x < AVATAR_W; x++) {
-      const ch = row[x] || '.';
+      const ch = composedCharAt(x, y, cfg);
+      if (ch === '.') continue;
       const px = resolveColor(ch, cfg);
       if (!px) continue;
       const idx = (y * AVATAR_W + x) * 4;
@@ -210,8 +160,8 @@ const ROOM_W = 576;
 const FACE_H = 5;
 const WALL_H = 64;
 
-const me     = makeAvatar('me',     5, 5, true,  { hair: '#4A3728', skin: '#FFCC99', shirt: '#4488CC', pants: '#2244AA' });
-const friend = makeAvatar('friend', 3, 3, false, { hair: '#1A1A6E', skin: '#FFCC99', shirt: '#CC4444', pants: '#333344' });
+const me     = makeAvatar('me',     5, 5, true,  { hair: '#4A3728', skin: '#FFCC99', shirt: '#4488CC', pants: '#2244AA', hairStyle: 0, shirtStyle: 0, pantsStyle: 0 });
+const friend = makeAvatar('friend', 3, 3, false, { hair: '#1A1A6E', skin: '#FFCC99', shirt: '#CC4444', pants: '#333344', hairStyle: 1, shirtStyle: 1, pantsStyle: 1 });
 const avatars = [me, friend];
 
 const bubbles = [];
@@ -613,3 +563,16 @@ function send() {
 
 // Welcome bubble on load
 setTimeout(() => spawnBubble(friend, 'hey welcome to my den :)'), 600);
+
+// ── Expose helpers for the customiser modal ───────────────────────────
+window.den = {
+  WARDROBE,
+  me,
+  friend,
+  buildAvatarSprite,
+  AVATAR_W,
+  AVATAR_H,
+  rebuildSprite(avatar) {
+    avatar.sprite = buildAvatarSprite(avatar.cfg);
+  },
+};

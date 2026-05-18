@@ -1,6 +1,7 @@
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import '../../core/palette.dart';
+import '../avatar/customiser_sheet.dart';
 import '../chat/chat_overlay.dart';
 import 'den_game.dart';
 
@@ -86,9 +87,7 @@ class _RoomScreenState extends State<RoomScreen> {
                   const Spacer(),
                   _IconButton(
                     icon: Icons.person_rounded,
-                    onTap: () {
-                      // TODO: open avatar customiser sheet
-                    },
+                    onTap: () => _openCustomiser(context),
                   ),
                 ],
               ),
@@ -105,6 +104,22 @@ class _RoomScreenState extends State<RoomScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+  void _openCustomiser(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => SizedBox(
+        height: MediaQuery.of(context).size.height * 0.92,
+        child: CustomiserSheet(
+          initial: _game.myAvatarConfig(),
+          onSave: (next) => _game.applyMyAvatarConfig(next),
+        ),
       ),
     );
   }

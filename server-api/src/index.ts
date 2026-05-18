@@ -93,6 +93,47 @@ async function main() {
     },
   );
 
+  // ── GET /users/:id/avatar — public avatar config (for rendering peers) ─
+  app.get<{ Params: { id: string } }>(
+    '/users/:id/avatar',
+    { preHandler: [app.authenticate] },
+    async (req, reply) => {
+      const { rows } = await db.query(
+        `SELECT u.id, u.username,
+                a.skin_color, a.hair_style, a.hair_color,
+                a.shirt_style, a.shirt_color, a.pants_style, a.pants_color
+         FROM users u
+         JOIN avatar_configs a ON a.user_id = u.id
+         WHERE u.id = $1`,
+        [req.params.id],
+      );
+      if (!rows[0]) return reply.status(404).send({ error: 'Not found' });
+      return rows[0];
+    },
+  );
+
+  // ── GET /catalog/wardrobe — available styles + colour palettes ───────────
+  // Public. Style IDs map to client-side templates today; when we ship real
+  // sprite sheets this will list asset URLs per id.
+  app.get('/catalog/wardrobe', async () => ({
+    hairStyles: [
+      { id: 0, name: 'Short' },
+      { id: 1, name: 'Long' },
+    ],
+    shirtStyles: [
+      { id: 0, name: 'Sweater' },
+      { id: 1, name: 'Tank' },
+    ],
+    pantsStyles: [
+      { id: 0, name: 'Jeans' },
+      { id: 1, name: 'Shorts' },
+    ],
+    skinTones:   ['#FFCC99', '#E8A87C', '#B97A56', '#8B5A3C', '#FFE2C2'],
+    hairColors:  ['#4A3728', '#1A1A1A', '#E8C275', '#CC4444', '#8B6F50', '#666666', '#7C4A95', '#1A1A6E'],
+    shirtColors: ['#4488CC', '#CC4444', '#44CC44', '#CC9944', '#CC44CC', '#F5A623', '#333333', '#EEEEEE'],
+    pantsColors: ['#2244AA', '#333344', '#666666', '#8B5A3C', '#000000', '#22AA44'],
+  }));
+
   // ── PUT /users/me/avatar ─────────────────────────────────────────────────
   app.put<{
     Body: {

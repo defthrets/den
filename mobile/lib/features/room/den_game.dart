@@ -118,4 +118,12 @@ class DenGame extends FlameGame with TapCallbacks {
     _avatars[userId]?.removeFromParent();
     _avatars.remove(userId);
   }
+
+  // ── Avatar customisation ────────────────────────────────────────────
+  AvatarConfig myAvatarConfig() => _myAvatar.config;
+
+  Future<void> applyMyAvatarConfig(AvatarConfig next) async {
+    await _myAvatar.updateConfig(next);
+    // TODO: PUT /users/me/avatar with next.toServerPayload()
+  }
 }
