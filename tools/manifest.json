@@ -1,0 +1,47 @@
+{
+  "outputs": {
+    "mobile": "mobile/assets/sprites",
+    "preview": "preview/sprites"
+  },
+  "_notes": [
+    "Each preset becomes one sprite sheet PNG at <id>.png in both output dirs.",
+    "Sprite-sheet layout for rd_animation__walking_and_idle (48x48):",
+    "  4 rows × 4 cols. Rows = direction (S, E, N, W). Cols = walk frames.",
+    "  Idle is in a separate column or first/last col — verify against output.",
+    "Cost runs ~0.25 credits per animation call. Re-runs skipped unless --force."
+  ],
+  "presets": [
+    {
+      "id": "casual_blue",
+      "prompt": "young person, short brown hair, blue sweater, navy jeans, neutral expression, simple pixel art character on transparent background",
+      "style": "rd_animation__walking_and_idle",
+      "width": 48,
+      "height": 48,
+      "seed": 100
+    },
+    {
+      "id": "tank_redhead",
+      "prompt": "young person, long red hair, orange tank top, blue shorts, neutral expression, simple pixel art character on transparent background",
+      "style": "rd_animation__walking_and_idle",
+      "width": 48,
+      "height": 48,
+      "seed": 101
+    },
+    {
+      "id": "punk_purple",
+      "prompt": "young person, short purple hair, dark grey jumper, black trousers, neutral expression, simple pixel art character on transparent background",
+      "style": "rd_animation__walking_and_idle",
+      "width": 48,
+      "height": 48,
+      "seed": 102
+    },
+    {
+      "id": "summer_yellow",
+      "prompt": "young person, short blonde hair, yellow t-shirt, brown shorts, friendly expression, simple pixel art character on transparent background",
+      "style": "rd_animation__walking_and_idle",
+      "width": 48,
+      "height": 48,
+      "seed": 103
+    }
+  ]
+}
