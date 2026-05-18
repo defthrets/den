@@ -102,9 +102,12 @@
     display: flex; align-items: center; gap: 8px;
     background: var(--surface);
     border-top: 1px solid var(--border);
-    z-index: 3;
+    z-index: 5;                /* sits above the keyboard */
     box-shadow: 0 -2px 12px rgba(0,0,0,0.35);
+    transition: bottom 240ms cubic-bezier(.4,0,.2,1);
   }
+  /* When the keyboard is open, the input bar rides on top of it */
+  .input-bar.kbd-open { bottom: 296px; }
   .input-bar .lock { color: var(--accent); font-size: 12px; margin-left: 4px; }
   .input-bar input {
     flex: 1;
@@ -139,16 +142,16 @@
   .keyboard {
     position: absolute;
     left: 0; right: 0;
-    bottom: -300px;
+    bottom: -300px;             /* hidden by default */
     height: 296px;
     background: linear-gradient(to bottom, #2a2d33, #1a1c20);
     border-top: 1px solid #000;
     padding: 6px 4px 8px;
     transition: bottom 240ms cubic-bezier(.4,0,.2,1);
-    z-index: 4;
+    z-index: 4;                 /* below the input bar */
     display: flex; flex-direction: column; gap: 6px;
   }
-  .keyboard.open { bottom: 56px; }
+  .keyboard.open { bottom: 0; }  /* sits flush at the very bottom */
   .kbd-row {
     display: flex; gap: 4px; justify-content: center;
     flex: 1;

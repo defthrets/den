@@ -588,8 +588,11 @@ const keyboard = document.getElementById('keyboard');
 // Show the faux keyboard whenever the input is focused. On a real device,
 // the OS keyboard slides up and Flutter's MediaQuery.viewInsets handles
 // the layout shift — this is just the preview's visual surrogate.
-input.addEventListener('focus', () => keyboard.classList.add('open'));
-input.addEventListener('blur',  () => keyboard.classList.remove('open'));
+const inputBar = document.querySelector('.input-bar');
+function openKeyboard()  { keyboard.classList.add('open');    inputBar.classList.add('kbd-open');    }
+function closeKeyboard() { keyboard.classList.remove('open'); inputBar.classList.remove('kbd-open'); }
+input.addEventListener('focus', openKeyboard);
+input.addEventListener('blur',  closeKeyboard);
 
 sendBtn.addEventListener('click', send);
 input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
