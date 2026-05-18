@@ -27,3 +27,9 @@ mobile/.idea/
 # OS
 .DS_Store
 Thumbs.db
+
+# Reference images for AI sprite generation — don't commit copyrighted refs
+references/*.png
+references/*.jpg
+references/*.jpeg
+

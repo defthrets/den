@@ -30,6 +30,27 @@ const FORCE  = args.includes('--force');
 const COST   = args.includes('--cost');
 const idFilter = args.find(a => !a.startsWith('--'));
 
+/**
+ * Look for a reference image to feed as `input_image`:
+ *   1. references/<preset-id>.png (per-preset)
+ *   2. references/_global.png     (fallback for all presets)
+ * Returns the base64-encoded bytes (no data: prefix) or null.
+ */
+async function loadReferenceImage(presetId) {
+  const repoRoot = path.resolve(__dirname, '..');
+  const candidates = [
+    path.join(repoRoot, 'references', `${presetId}.png`),
+    path.join(repoRoot, 'references', '_global.png'),
+  ];
+  for (const p of candidates) {
+    try {
+      const buf = await fs.readFile(p);
+      return { base64: buf.toString('base64'), source: path.relative(repoRoot, p) };
+    } catch {/* try next */}
+  }
+  return null;
+}
+
 async function callApi(item, extra = {}) {
   const body = {
     prompt: item.prompt,
@@ -41,6 +62,13 @@ async function callApi(item, extra = {}) {
     seed: item.seed,
     ...extra,
   };
+
+  // Inject input_image if a reference is available for this preset
+  const ref = await loadReferenceImage(item.id);
+  if (ref && !('input_image' in body)) {
+    body.input_image = ref.base64;
+    process.stdout.write(`(ref: ${ref.source}) `);
+  }
 
   const res = await fetch(API_URL, {
     method: 'POST',

@@ -4,44 +4,43 @@
     "preview": "preview/sprites"
   },
   "_notes": [
-    "Prompts target authentic 1990s/2000s Habbo Hotel character art:",
-    "  oval head with flat top, two solid black dot eyes (no whites),",
-    "  no visible mouth or just a tiny line, solid block hair shape,",
-    "  plain top and bottom clothing, rounded body, short stubby limbs,",
-    "  dark silhouette outline, flat colours, no anti-aliasing."
+    "Each preset uses references/_global.png as input_image so RD can",
+    "mimic the classic Habbo Hotel style (oval heads, tiny dot eyes,",
+    "solid hair shapes, plain bodies, dark outlines). Prompts briefly",
+    "describe the reference and then specify per-character variations."
   ],
   "presets": [
     {
       "id": "casual_blue",
-      "prompt": "classic Habbo Hotel character sprite, oval head with flat top, two black dot eyes no whites, tiny mouth, solid short brown hair, plain blue sweater, navy trousers, rounded body, short stubby arms, small feet, dark outline, flat shaded pixel art, retro 2000s web game aesthetic",
+      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short brown hair, blue sweater, navy trousers",
       "style": "rd_animation__small_sprites",
       "width": 32,
       "height": 32,
-      "seed": 300
+      "seed": 400
     },
     {
       "id": "tank_redhead",
-      "prompt": "classic Habbo Hotel character sprite, oval head with flat top, two black dot eyes no whites, tiny mouth, solid long red hair, plain orange tank top, blue shorts, rounded body, short stubby arms, small feet, dark outline, flat shaded pixel art, retro 2000s web game aesthetic",
+      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, long red hair, orange tank top, blue shorts",
       "style": "rd_animation__small_sprites",
       "width": 32,
       "height": 32,
-      "seed": 301
+      "seed": 401
     },
     {
       "id": "punk_purple",
-      "prompt": "classic Habbo Hotel character sprite, oval head with flat top, two black dot eyes no whites, tiny mouth, solid short purple hair, plain dark grey jumper, black trousers, rounded body, short stubby arms, small feet, dark outline, flat shaded pixel art, retro 2000s web game aesthetic",
+      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short purple hair, dark grey jumper, black trousers",
       "style": "rd_animation__small_sprites",
       "width": 32,
       "height": 32,
-      "seed": 302
+      "seed": 402
     },
     {
       "id": "summer_yellow",
-      "prompt": "classic Habbo Hotel character sprite, oval head with flat top, two black dot eyes no whites, tiny mouth, solid short blonde hair, plain yellow t-shirt, brown shorts, rounded body, short stubby arms, small feet, dark outline, flat shaded pixel art, retro 2000s web game aesthetic",
+      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short blonde hair, yellow t-shirt, brown shorts",
       "style": "rd_animation__small_sprites",
       "width": 32,
       "height": 32,
-      "seed": 303
+      "seed": 403
     }
   ]
 }
