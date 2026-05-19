@@ -18,19 +18,30 @@ const FURNITURE_CATALOG = [
   { id: 'table_round', name: 'Round table' },
   { id: 'lamp_floor',  name: 'Floor lamp' },
   { id: 'rug_persian', name: 'Persian rug' },
+  { id: 'bookshelf',   name: 'Bookshelf' },
+  { id: 'tv_crt',      name: 'CRT TV' },
+  { id: 'fridge',      name: 'Fridge' },
+  { id: 'desk_wood',   name: 'Wooden desk' },
+  { id: 'computer',    name: 'Computer' },
+  { id: 'fish_tank',   name: 'Fish tank' },
+  { id: 'painting',    name: 'Painting' },
 ];
 
 // Per-room placements. Eventually this comes from /users/:id/room.
 // { id, col, row } — col/row are tile coords in the 10x8 room.
 const ROOM_FURNITURE = [
+  { id: 'bookshelf',   col: 0, row: 0 },
   { id: 'sofa_red',    col: 1, row: 1 },
-  { id: 'lamp_floor',  col: 0, row: 0 },
   { id: 'table_round', col: 2, row: 2 },
-  { id: 'bed_blue',    col: 8, row: 1 },
-  { id: 'rug_persian', col: 5, row: 4 },
+  { id: 'lamp_floor',  col: 3, row: 0 },
+  { id: 'tv_crt',      col: 5, row: 0 },
+  { id: 'fridge',      col: 8, row: 0 },
+  { id: 'bed_blue',    col: 8, row: 2 },
+  { id: 'rug_persian', col: 4, row: 4 },
+  { id: 'chair_wood',  col: 6, row: 3 },
   { id: 'plant_tall',  col: 9, row: 7 },
   { id: 'plant_tall',  col: 0, row: 7 },
-  { id: 'chair_wood',  col: 6, row: 4 },
+  { id: 'fish_tank',   col: 2, row: 6 },
 ];
 
 const furnitureSprites = {};

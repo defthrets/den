@@ -16,6 +16,13 @@ class FurnitureCatalog {
     FurnitureItem(id: 'table_round', name: 'Round table'),
     FurnitureItem(id: 'lamp_floor',  name: 'Floor lamp'),
     FurnitureItem(id: 'rug_persian', name: 'Persian rug'),
+    FurnitureItem(id: 'bookshelf',   name: 'Bookshelf'),
+    FurnitureItem(id: 'tv_crt',      name: 'CRT TV'),
+    FurnitureItem(id: 'fridge',      name: 'Fridge'),
+    FurnitureItem(id: 'desk_wood',   name: 'Wooden desk'),
+    FurnitureItem(id: 'computer',    name: 'Computer'),
+    FurnitureItem(id: 'fish_tank',   name: 'Fish tank'),
+    FurnitureItem(id: 'painting',    name: 'Painting'),
   ];
 }
 

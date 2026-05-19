@@ -131,6 +131,13 @@ async function main() {
       { id: 'table_round', name: 'Round table' },
       { id: 'lamp_floor',  name: 'Floor lamp' },
       { id: 'rug_persian', name: 'Persian rug' },
+      { id: 'bookshelf',   name: 'Bookshelf' },
+      { id: 'tv_crt',      name: 'CRT TV' },
+      { id: 'fridge',      name: 'Fridge' },
+      { id: 'desk_wood',   name: 'Wooden desk' },
+      { id: 'computer',    name: 'Computer' },
+      { id: 'fish_tank',   name: 'Fish tank' },
+      { id: 'painting',    name: 'Painting' },
     ],
   }));
 
