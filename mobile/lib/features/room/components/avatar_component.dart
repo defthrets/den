@@ -56,12 +56,10 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
   int _walkFrame = 0;
   double _walkFrameTimer = 0;
 
-  /// Character's feet sit at ~87% down the 32-px frame in the
-  /// Retro Diffusion sprites — the remaining 13% is transparent
-  /// padding. Anchor at that y so the feet land on the tile center
-  /// instead of the frame bottom (which used to make avatars look
-  /// like they were floating).
-  static const double _feetAnchorY = 0.87;
+  /// Character's feet sit close to the bottom of the 96-px frame in
+  /// the two-stage rd_advanced_animation output. Anchoring at 93%
+  /// lands the feet on the tile center instead of the frame bottom.
+  static const double _feetAnchorY = 0.93;
 
   AvatarComponent({
     required this.col,
