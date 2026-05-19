@@ -173,7 +173,7 @@ const FACE_H = 5;
 const WALL_H = 64;
 
 const me     = makeAvatar('me',     5, 5, true,  { preset: 'casual_blue' });
-const friend = makeAvatar('friend', 3, 3, false, { preset: 'tank_redhead' });
+const friend = makeAvatar('friend', 3, 3, false, { preset: 'scholar_glasses' });
 const avatars = [me, friend];
 
 const bubbles = [];
@@ -618,9 +618,6 @@ window.den = {
   friend,
   presets: [
     { id: 'casual_blue',     name: 'Casual'   },
-    { id: 'tank_redhead',    name: 'Tank'     },
-    { id: 'punk_purple',     name: 'Punk'     },
-    { id: 'summer_yellow',   name: 'Summer'   },
     { id: 'athletic_green',  name: 'Athletic' },
     { id: 'scholar_glasses', name: 'Scholar'  },
     { id: 'biker_black',     name: 'Biker'    },

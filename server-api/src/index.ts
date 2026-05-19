@@ -116,9 +116,6 @@ async function main() {
   app.get('/catalog/wardrobe', async () => ({
     presets: [
       { id: 'casual_blue',     name: 'Casual' },
-      { id: 'tank_redhead',    name: 'Tank' },
-      { id: 'punk_purple',     name: 'Punk' },
-      { id: 'summer_yellow',   name: 'Summer' },
       { id: 'athletic_green',  name: 'Athletic' },
       { id: 'scholar_glasses', name: 'Scholar' },
       { id: 'biker_black',     name: 'Biker' },
