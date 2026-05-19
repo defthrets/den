@@ -9,19 +9,23 @@ const TILE_H_HALF = TILE_H / 2;
 const ROOM_COLS = 10;
 const ROOM_ROWS = 8;
 
-const AVATAR_SCALE_BOOST = 3.0;   // 48-px sprites — smaller pixels per character than the old 32-px
+const AVATAR_SCALE_BOOST = 1.8;   // 96-px sprites — pixel density matches the furniture iso assets
 
-// Sprite sheet layout (rd_animation__four_angle_walking): 4 cols × 4 rows of 48×48 frames.
-// Rows = facing direction (N, E, S, W). Cols 0-3 = walk-cycle frames.
-const FRAME_W = 48;
-const FRAME_H = 48;
-const DIR_N = 0, DIR_E = 1, DIR_S = 2, DIR_W = 3;
-const WALK_FRAMES = 4;             // number of frames in the cycle
+// Sprite sheet layout (two-stage rd_advanced_animation__walking output):
+// 2 cols × 2 rows of 96×96 frames — 4 walk-cycle frames total, all same direction
+// (the character faces the camera). Frame N → (col = N%2, row = N//2).
+const FRAME_W = 96;
+const FRAME_H = 96;
+const WALK_FRAMES = 4;
+const WALK_GRID_COLS = 2;
 
 const WALK_DURATION = 0.85;        // seconds per tile
 const WALK_FRAME_DURATION = 0.18;  // seconds per walk-cycle frame
 const BUBBLE_LIFETIME = 4.5;
 const BUBBLE_RISE_SPEED = 26;
+
+// Bump when regenerating sprites so the browser fetches the new PNGs.
+const SPRITE_VERSION = 3;
 
 const PAL = {
   skyTop:        '#1A2744',
@@ -179,20 +183,12 @@ function makeAvatar(userId, col, row, isMe, cfg) {
     userId, col, row, isMe, cfg,
     state: 'idle', target: null, walkT: 0, bob: Math.random() * Math.PI * 2,
     sprite: null,
-    direction: DIR_S,
     walkFrame: 0,
     walkFrameTimer: 0,
   };
   a.sprite = new Image();
-  a.sprite.src = `sprites/${cfg.preset}.png`;
+  a.sprite.src = `sprites/${cfg.preset}.png?v=${SPRITE_VERSION}`;
   return a;
-}
-
-function directionFromMovement(dcol, drow) {
-  if (Math.abs(dcol) >= Math.abs(drow)) {
-    return dcol >= 0 ? DIR_E : DIR_W;
-  }
-  return drow >= 0 ? DIR_S : DIR_N;
 }
 
 // ── Layout ───────────────────────────────────────────────────────────────
@@ -354,8 +350,10 @@ function drawAvatar(a) {
   // Idle bob
   const bob = a.state === 'idle' ? Math.sin(a.bob) * 0.5 * scale : 0;
 
-  const frameCol = a.state === 'walking' ? a.walkFrame : 0;
-  const frameRow = a.direction;
+  // Map flat frame index → (col, row) in the 2x2 grid.
+  const frameIdx = a.state === 'walking' ? a.walkFrame : 0;
+  const frameCol = frameIdx % WALK_GRID_COLS;
+  const frameRow = Math.floor(frameIdx / WALK_GRID_COLS);
 
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(
@@ -508,10 +506,7 @@ function frame(dtMs) {
     if (a.state === 'walking' && a.target) {
       a.walkT = Math.min(1, a.walkT + dt / WALK_DURATION);
 
-      // Update facing from the movement vector
-      a.direction = directionFromMovement(a.target.col - a.col, a.target.row - a.row);
-
-      // Cycle the walk frame (cols 0 → 1 → 2 → 3 → 0 ...)
+      // Cycle the walk frame (0 → 1 → 2 → 3 → 0 ...)
       a.walkFrameTimer += dt;
       if (a.walkFrameTimer >= WALK_FRAME_DURATION) {
         a.walkFrame = (a.walkFrame + 1) % WALK_FRAMES;
@@ -633,9 +628,10 @@ window.den = {
   ],
   FRAME_W,
   FRAME_H,
+  SPRITE_VERSION,
   setPreset(avatar, presetId) {
     avatar.cfg = { ...avatar.cfg, preset: presetId };
     avatar.sprite = new Image();
-    avatar.sprite.src = `sprites/${presetId}.png`;
+    avatar.sprite.src = `sprites/${presetId}.png?v=${SPRITE_VERSION}`;
   },
 };

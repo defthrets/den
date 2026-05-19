@@ -25,7 +25,7 @@
   function loadSprite(id) {
     if (spriteCache[id]) return spriteCache[id];
     const img = new Image();
-    img.src = `sprites/${id}.png`;
+    img.src = `sprites/${id}.png?v=${den.SPRITE_VERSION ?? 1}`;
     spriteCache[id] = img;
     return img;
   }

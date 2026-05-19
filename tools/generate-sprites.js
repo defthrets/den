@@ -11,8 +11,9 @@
  *   node tools/generate-sprites.js casual_blue    # one item by id
  *
  * Reads tools/manifest.json. Manifest has two arrays:
- *   - avatars[]   → animation sprite sheets (32x32 × 5x4)
- *   - furniture[] → static iso assets       (64x64–96x96)
+ *   - avatars[]   → single-stage animation sheets, OR two-stage
+ *                  (static rd_plus then rd_advanced_animation__walking).
+ *   - furniture[] → static iso assets (rd_plus__isometric_asset).
  */
 
 const fs   = require('fs').promises;
@@ -29,17 +30,12 @@ const API_URL = 'https://api.retrodiffusion.ai/v1/inferences';
 
 const args   = process.argv.slice(2);
 const FORCE  = args.includes('--force');
-const ONLY   = args.find(a => a.startsWith('--only='))?.split('=')[1];   // avatars | furniture
+const ONLY   = args.find(a => a.startsWith('--only='))?.split('=')[1];
 const idFilter = args.find(a => !a.startsWith('--'));
 
 const isAnimationStyle = s =>
   s.startsWith('rd_animation__') || s.startsWith('rd_advanced_animation__');
 
-/**
- * Look for a reference image to feed as `input_image`:
- *   1. references/<id>.png  (per-item)
- *   2. references/_global.png (fallback)
- */
 async function loadReferenceImage(id) {
   const repoRoot = path.resolve(__dirname, '..');
   for (const candidate of [
@@ -54,8 +50,19 @@ async function loadReferenceImage(id) {
   return null;
 }
 
-async function callApi(item, kind) {
-  const animation = isAnimationStyle(item.style);
+async function callApi(body) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'X-RD-Token': API_KEY, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text.slice(0, 200)}`);
+  try { return JSON.parse(text); }
+  catch { throw new Error(`Non-JSON response: ${text.slice(0, 200)}`); }
+}
+
+function buildBody(item, extra = {}) {
   const body = {
     prompt: item.prompt,
     prompt_style: item.style,
@@ -63,51 +70,84 @@ async function callApi(item, kind) {
     height: item.height,
     num_images: 1,
     seed: item.seed,
+    ...extra,
   };
-  if (animation) body.return_spritesheet = true;
-  // Static items need a transparent background; the AI tends to paint a
-  // beige neutral background otherwise. RD's background_removal service
-  // handles the cleanup.
-  if (!animation && kind === 'furniture') body.remove_bg = true;
+  if (isAnimationStyle(item.style)) body.return_spritesheet = true;
+  if (item.remove_bg) body.remove_bg = true;
+  return body;
+}
 
-  // Only animation styles support input_image. Static styles use
-  // reference_images (rd_pro only) or no reference at all.
-  if (animation && kind === 'avatars') {
-    const ref = await loadReferenceImage(item.id);
-    if (ref) {
-      body.input_image = ref.base64;
-      process.stdout.write(`(ref: ${ref.source}) `);
-    }
+/** Single-stage: one API call. */
+async function generateSingle(item) {
+  const body = buildBody(item);
+  const data = await callApi(body);
+  if (!data.base64_images || data.base64_images.length === 0) {
+    throw new Error(`No images: ${JSON.stringify(data).slice(0, 200)}`);
+  }
+  return { base64: data.base64_images[0], cost: data.balance_cost, balance: data.remaining_balance };
+}
+
+/** Two-stage: static -> animated. Returns the animated sheet. */
+async function generateTwoStage(item) {
+  // Stage 1
+  const stage1Body = buildBody(item.stage1);
+  process.stdout.write('s1... ');
+  const s1 = await callApi(stage1Body);
+  if (!s1.base64_images || s1.base64_images.length === 0) {
+    throw new Error(`Stage 1 returned no images: ${JSON.stringify(s1).slice(0, 200)}`);
+  }
+  const staticPng = s1.base64_images[0];
+
+  // Stage 2: feed the static as input_image
+  const stage2Body = {
+    ...buildBody(item.stage2, {
+      input_image: staticPng,
+      ...(item.stage2.frames_duration ? { frames_duration: item.stage2.frames_duration } : {}),
+    }),
+  };
+  // Animation styles always want return_spritesheet for our pipeline
+  stage2Body.return_spritesheet = true;
+  process.stdout.write('s2... ');
+  const s2 = await callApi(stage2Body);
+  if (!s2.base64_images || s2.base64_images.length === 0) {
+    throw new Error(`Stage 2 returned no images: ${JSON.stringify(s2).slice(0, 200)}`);
   }
 
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'X-RD-Token': API_KEY, 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  const text = await res.text();
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
-  try { return JSON.parse(text); }
-  catch { throw new Error(`Non-JSON response: ${text.slice(0, 200)}`); }
+  const cost = (s1.balance_cost ?? 0) + (s2.balance_cost ?? 0);
+  return { base64: s2.base64_images[0], cost: cost.toFixed(3), balance: s2.remaining_balance };
 }
 
 async function generate(item, kind) {
   const start = Date.now();
   process.stdout.write(`→ ${item.id.padEnd(20)} `);
-  const data = await callApi(item, kind);
-  const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-  if (!data.base64_images || data.base64_images.length === 0) {
-    throw new Error(`No images in response: ${JSON.stringify(data).slice(0, 200)}`);
+
+  // Inject reference image if available (single-stage avatars only)
+  if (kind === 'avatars' && !item.kind && isAnimationStyle(item.style)) {
+    const ref = await loadReferenceImage(item.id);
+    if (ref) {
+      item = { ...item, input_image: ref.base64 };
+      process.stdout.write(`(ref) `);
+    }
   }
-  process.stdout.write(`✓ ${elapsed}s  cost ${data.balance_cost}  balance ${data.remaining_balance}\n`);
-  return data.base64_images[0];
+  if (kind === 'furniture' && !isAnimationStyle(item.style)) {
+    item = { ...item, remove_bg: true };
+  }
+
+  let result;
+  if (item.kind === 'two_stage') {
+    result = await generateTwoStage(item);
+  } else {
+    result = await generateSingle(item);
+  }
+
+  const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+  process.stdout.write(`✓ ${elapsed}s  cost ${result.cost}  balance ${result.balance}\n`);
+  return result.base64;
 }
 
 async function processGroup(items, kind, outDirs) {
-  if (items.length === 0) return 0;
+  if (!items?.length) return 0;
   console.log(`\n${kind} (${items.length})`);
-
   let spent = 0;
   for (const item of items) {
     if (idFilter && item.id !== idFilter) continue;
@@ -155,9 +195,8 @@ async function main() {
   }
 
   let total = 0;
-  if (!ONLY || ONLY === 'avatars')   total += await processGroup(manifest.avatars   ?? [], 'avatars',   avatarOut);
-  if (!ONLY || ONLY === 'furniture') total += await processGroup(manifest.furniture ?? [], 'furniture', furnitureOut);
-
+  if (!ONLY || ONLY === 'avatars')   total += await processGroup(manifest.avatars,   'avatars',   avatarOut);
+  if (!ONLY || ONLY === 'furniture') total += await processGroup(manifest.furniture, 'furniture', furnitureOut);
   console.log(`\nDone. Generated ${total} sprite(s).`);
 }
 

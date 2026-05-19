@@ -35,7 +35,7 @@ const furnitureSprites = {};
 function loadFurnitureSprite(id) {
   if (furnitureSprites[id]) return furnitureSprites[id];
   const img = new Image();
-  img.src = `furniture/${id}.png`;
+  img.src = `furniture/${id}.png?v=${typeof SPRITE_VERSION !== 'undefined' ? SPRITE_VERSION : 1}`;
   furnitureSprites[id] = img;
   return img;
 }

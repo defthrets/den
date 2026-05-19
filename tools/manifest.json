@@ -1,80 +1,130 @@
 {
   "outputs": {
-    "mobile_avatars": "mobile/assets/sprites",
-    "preview_avatars": "preview/sprites",
-    "mobile_furniture": "mobile/assets/furniture",
+    "mobile_avatars":    "mobile/assets/sprites",
+    "preview_avatars":   "preview/sprites",
+    "mobile_furniture":  "mobile/assets/furniture",
     "preview_furniture": "preview/furniture"
   },
   "_notes": [
-    "Avatars use rd_animation__four_angle_walking (48x48, 4-dir x 4-frame walk).",
-    "Furniture uses rd_pro__isometric_asset (single iso object, neutral bg).",
-    "Avatar presets pick up style cues from references/_global.png (a cropped Habbo character).",
-    "Furniture skips reference because we want distinct objects per item, not character clones."
+    "Avatars are generated in TWO stages so they match furniture pixel density (96px):",
+    "  Stage 1: rd_plus__default produces a neutral standing pose at 96x96.",
+    "  Stage 2: rd_advanced_animation__walking takes that pose as input_image",
+    "           and outputs a 192x192 sheet (2 cols x 2 rows of 96x96 walk frames).",
+    "Cost: ~0.03 + ~0.14 = ~0.17 per character. Single facing direction only.",
+    "Furniture uses single-stage rd_plus__isometric_asset."
   ],
   "avatars": [
     {
       "id": "casual_blue",
-      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short brown hair, blue sweater, navy trousers",
-      "style": "rd_animation__four_angle_walking",
-      "width": 48,
-      "height": 48,
-      "seed": 400
+      "kind": "two_stage",
+      "stage1": {
+        "prompt": "Habbo Hotel character facing camera, standing neutral pose, short brown hair, blue sweater, navy jeans, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "style": "rd_plus__default",
+        "width": 96, "height": 96, "seed": 600, "remove_bg": true
+      },
+      "stage2": {
+        "prompt": "slow neutral walking cycle",
+        "style": "rd_advanced_animation__walking",
+        "width": 96, "height": 96, "frames_duration": 4
+      }
     },
     {
       "id": "tank_redhead",
-      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, long red hair, orange tank top, blue shorts",
-      "style": "rd_animation__four_angle_walking",
-      "width": 48,
-      "height": 48,
-      "seed": 401
+      "kind": "two_stage",
+      "stage1": {
+        "prompt": "Habbo Hotel character facing camera, standing neutral pose, long red hair, orange tank top, blue shorts, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "style": "rd_plus__default",
+        "width": 96, "height": 96, "seed": 601, "remove_bg": true
+      },
+      "stage2": {
+        "prompt": "slow neutral walking cycle",
+        "style": "rd_advanced_animation__walking",
+        "width": 96, "height": 96, "frames_duration": 4
+      }
     },
     {
       "id": "punk_purple",
-      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short purple hair, dark grey jumper, black trousers",
-      "style": "rd_animation__four_angle_walking",
-      "width": 48,
-      "height": 48,
-      "seed": 402
+      "kind": "two_stage",
+      "stage1": {
+        "prompt": "Habbo Hotel character facing camera, standing neutral pose, short purple hair, dark grey jumper, black trousers, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "style": "rd_plus__default",
+        "width": 96, "height": 96, "seed": 602, "remove_bg": true
+      },
+      "stage2": {
+        "prompt": "slow neutral walking cycle",
+        "style": "rd_advanced_animation__walking",
+        "width": 96, "height": 96, "frames_duration": 4
+      }
     },
     {
       "id": "summer_yellow",
-      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short blonde hair, yellow t-shirt, brown shorts",
-      "style": "rd_animation__four_angle_walking",
-      "width": 48,
-      "height": 48,
-      "seed": 403
+      "kind": "two_stage",
+      "stage1": {
+        "prompt": "Habbo Hotel character facing camera, standing neutral pose, short blonde hair, yellow t-shirt, brown shorts, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "style": "rd_plus__default",
+        "width": 96, "height": 96, "seed": 603, "remove_bg": true
+      },
+      "stage2": {
+        "prompt": "slow neutral walking cycle",
+        "style": "rd_advanced_animation__walking",
+        "width": 96, "height": 96, "frames_duration": 4
+      }
     },
     {
       "id": "athletic_green",
-      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short black hair, green athletic vest, white shorts, dark skin",
-      "style": "rd_animation__four_angle_walking",
-      "width": 48,
-      "height": 48,
-      "seed": 404
+      "kind": "two_stage",
+      "stage1": {
+        "prompt": "Habbo Hotel character facing camera, standing neutral pose, short black hair, green athletic vest, white shorts, dark skin, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "style": "rd_plus__default",
+        "width": 96, "height": 96, "seed": 604, "remove_bg": true
+      },
+      "stage2": {
+        "prompt": "slow neutral walking cycle",
+        "style": "rd_advanced_animation__walking",
+        "width": 96, "height": 96, "frames_duration": 4
+      }
     },
     {
       "id": "scholar_glasses",
-      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short curly black hair, round glasses, beige cardigan, brown trousers",
-      "style": "rd_animation__four_angle_walking",
-      "width": 48,
-      "height": 48,
-      "seed": 405
+      "kind": "two_stage",
+      "stage1": {
+        "prompt": "Habbo Hotel character facing camera, standing neutral pose, short curly black hair, round glasses, beige cardigan, brown trousers, oval head, simple pixel art, dark outline",
+        "style": "rd_plus__default",
+        "width": 96, "height": 96, "seed": 605, "remove_bg": true
+      },
+      "stage2": {
+        "prompt": "slow neutral walking cycle",
+        "style": "rd_advanced_animation__walking",
+        "width": 96, "height": 96, "frames_duration": 4
+      }
     },
     {
       "id": "biker_black",
-      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, slicked dark hair, black leather jacket, black jeans, dark boots",
-      "style": "rd_animation__four_angle_walking",
-      "width": 48,
-      "height": 48,
-      "seed": 406
+      "kind": "two_stage",
+      "stage1": {
+        "prompt": "Habbo Hotel character facing camera, standing neutral pose, slicked dark hair, black leather jacket, black jeans, dark boots, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "style": "rd_plus__default",
+        "width": 96, "height": 96, "seed": 606, "remove_bg": true
+      },
+      "stage2": {
+        "prompt": "slow neutral walking cycle",
+        "style": "rd_advanced_animation__walking",
+        "width": 96, "height": 96, "frames_duration": 4
+      }
     },
     {
       "id": "retro_pink",
-      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, pink twin pigtails, pastel pink jumper, light blue skirt",
-      "style": "rd_animation__four_angle_walking",
-      "width": 48,
-      "height": 48,
-      "seed": 407
+      "kind": "two_stage",
+      "stage1": {
+        "prompt": "Habbo Hotel character facing camera, standing neutral pose, pink twin pigtails, pastel pink jumper, light blue skirt, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "style": "rd_plus__default",
+        "width": 96, "height": 96, "seed": 607, "remove_bg": true
+      },
+      "stage2": {
+        "prompt": "slow neutral walking cycle",
+        "style": "rd_advanced_animation__walking",
+        "width": 96, "height": 96, "frames_duration": 4
+      }
     }
   ],
   "furniture": [
@@ -82,49 +132,37 @@
       "id": "chair_wood",
       "prompt": "single isometric pixel art wooden dining chair, simple flat shading, small footprint, neutral background, Habbo Hotel furniture style",
       "style": "rd_plus__isometric_asset",
-      "width": 96,
-      "height": 96,
-      "seed": 500
+      "width": 96, "height": 96, "seed": 500
     },
     {
       "id": "sofa_red",
       "prompt": "single isometric pixel art red two-seater sofa couch, plush cushions, simple flat shading, neutral background, Habbo Hotel furniture style",
       "style": "rd_plus__isometric_asset",
-      "width": 96,
-      "height": 96,
-      "seed": 501
+      "width": 96, "height": 96, "seed": 501
     },
     {
       "id": "bed_blue",
       "prompt": "single isometric pixel art bed with blue blanket and white pillow, simple flat shading, neutral background, Habbo Hotel furniture style",
       "style": "rd_plus__isometric_asset",
-      "width": 96,
-      "height": 96,
-      "seed": 502
+      "width": 96, "height": 96, "seed": 502
     },
     {
       "id": "plant_tall",
       "prompt": "single isometric pixel art tall potted houseplant with green leaves and terracotta pot, simple flat shading, neutral background, Habbo Hotel furniture style",
       "style": "rd_plus__isometric_asset",
-      "width": 96,
-      "height": 96,
-      "seed": 503
+      "width": 96, "height": 96, "seed": 503
     },
     {
       "id": "table_round",
       "prompt": "single isometric pixel art round wooden coffee table, simple flat shading, neutral background, Habbo Hotel furniture style",
       "style": "rd_plus__isometric_asset",
-      "width": 96,
-      "height": 96,
-      "seed": 504
+      "width": 96, "height": 96, "seed": 504
     },
     {
       "id": "lamp_floor",
       "prompt": "single isometric pixel art floor lamp with cream lampshade and brass stand, simple flat shading, neutral background, Habbo Hotel furniture style",
       "style": "rd_plus__isometric_asset",
-      "width": 96,
-      "height": 96,
-      "seed": 505
+      "width": 96, "height": 96, "seed": 505
     }
   ]
 }

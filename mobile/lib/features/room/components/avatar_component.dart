@@ -26,22 +26,16 @@ class AvatarConfig {
 
 enum AvatarState { idle, walking }
 
-/// 4 facing directions match the sprite-sheet row order from
-/// `rd_animation__four_angle_walking`: row 0 = north (back), 1 = east,
-/// 2 = south (front), 3 = west.
-const int _dirN = 0;
-const int _dirE = 1;
-const int _dirS = 2;
-const int _dirW = 3;
-
-/// Sprite-sheet-based avatar. The sheet is 4 cols × 4 rows of 48×48
-/// frames. Cols 0–3 are the walk cycle, col 0 doubles as the idle pose.
-/// The row picks facing direction.
+/// Sprite-sheet-based avatar. Two-stage Retro Diffusion output:
+/// 2 cols × 2 rows of 96×96 frames — 4 walk-cycle frames, all
+/// camera-facing (no separate direction rows). Frame N is at
+/// (col = N % 2, row = N ~/ 2) in the grid. Frame 0 doubles as idle.
 class AvatarComponent extends PositionComponent with TapCallbacks {
-  static const double frameW = 48;
-  static const double frameH = 48;
+  static const double frameW = 96;
+  static const double frameH = 96;
   static const int walkFrames = 4;
-  static const double _avatarScale = 3.0; // 48-px sprites at 3x = denser pixels than the old 32@4
+  static const int walkGridCols = 2;
+  static const double _avatarScale = 1.8; // matches furniture pixel density
   static const double walkDurationPerTile = 0.85;
   static const double walkFrameDuration = 0.18;
 
@@ -59,7 +53,6 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
   double _walkProgress = 0;
   double _bobPhase = 0;
 
-  int _direction = _dirS;
   int _walkFrame = 0;
   double _walkFrameTimer = 0;
 
@@ -111,10 +104,6 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
     _walkProgress = 0;
     _walkFrame = 0;
     _walkFrameTimer = 0;
-    _direction = _directionFromMovement(
-      _targetCol - col,
-      _targetRow - row,
-    );
   }
 
   Vector2 headWorldPosition() => Vector2(position.x, position.y - size.y);
@@ -164,8 +153,9 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
       Paint()..color = const Color(0x47000000),
     );
 
-    final frameCol = _state == AvatarState.walking ? _walkFrame : 0;
-    final frameRow = _direction;
+    final frameIdx = _state == AvatarState.walking ? _walkFrame : 0;
+    final frameCol = frameIdx % walkGridCols;
+    final frameRow = frameIdx ~/ walkGridCols;
 
     canvas.save();
     canvas.translate(0, bob);
@@ -182,13 +172,6 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
       3,
       Paint()..color = isMe ? DenPalette.accent : const Color(0xFF88BBFF),
     );
-  }
-
-  static int _directionFromMovement(int dcol, int drow) {
-    if (dcol.abs() >= drow.abs()) {
-      return dcol >= 0 ? _dirE : _dirW;
-    }
-    return drow >= 0 ? _dirS : _dirN;
   }
 
   static double _easeInOut(double t) =>
