@@ -15,6 +15,7 @@ class FurnitureCatalog {
     FurnitureItem(id: 'plant_tall',  name: 'Tall plant'),
     FurnitureItem(id: 'table_round', name: 'Round table'),
     FurnitureItem(id: 'lamp_floor',  name: 'Floor lamp'),
+    FurnitureItem(id: 'rug_persian', name: 'Persian rug'),
   ];
 }
 

@@ -1,8 +1,6 @@
-// Avatar customiser modal — body picker + parts UI (Habbo-style).
-//
-// "Body" works today (picks boy / girl base sprite generated via PixelLab).
-// Hair / Glasses / Top / Pants / Shoes / Accessory tabs are scaffolded
-// with placeholder content while we generate part variants.
+// Avatar customiser modal — simple body picker (Boy / Girl).
+// Hair / Glasses / Top / Pants / Shoes / Accessory are scaffolded as
+// "coming soon" stubs while we focus on furniture variety.
 (() => {
   const den       = window.den;
   const modal     = document.getElementById('customiser');
@@ -18,15 +16,15 @@
   previewC.height = den.FRAME_H;
 
   const TABS = [
-    { id: 'body',      label: 'Body',      stub: false },
-    { id: 'hair',      label: 'Hair',      stub: true  },
-    { id: 'glasses',   label: 'Glasses',   stub: true  },
-    { id: 'top',       label: 'Top',       stub: true  },
-    { id: 'pants',     label: 'Pants',     stub: true  },
-    { id: 'shoes',     label: 'Shoes',     stub: true  },
-    { id: 'accessory', label: 'Accessory', stub: true  },
+    { id: 'body',      label: 'Body'                  },
+    { id: 'hair',      label: 'Hair',      stub: true },
+    { id: 'glasses',   label: 'Glasses',   stub: true },
+    { id: 'top',       label: 'Top',       stub: true },
+    { id: 'pants',     label: 'Pants',     stub: true },
+    { id: 'shoes',     label: 'Shoes',     stub: true },
+    { id: 'accessory', label: 'Accessory', stub: true },
   ];
-  let activeTab = 'body';
+  let activeTab   = 'body';
   let draftPreset = den.me.cfg.preset;
   const spriteCache = {};
 
@@ -44,8 +42,7 @@
       previewX.clearRect(0, 0, previewC.width, previewC.height);
       previewX.drawImage(img, 0, 0, den.FRAME_W, den.FRAME_H, 0, 0, previewC.width, previewC.height);
     };
-    if (img.complete) draw();
-    else img.onload = draw;
+    if (img.complete) draw(); else { img.onload = draw; img.onerror = draw; }
   }
 
   function renderTabs() {
@@ -55,7 +52,6 @@
     for (const t of TABS) {
       const el = document.createElement('div');
       el.className = 'cust-tab' + (t.id === activeTab ? ' active' : '');
-      el.dataset.tab = t.id;
       el.textContent = t.label;
       el.style.flex = '0 0 auto';
       el.style.padding = '12px 18px';
@@ -84,9 +80,7 @@
     row.style.gap = '12px';
     content.appendChild(row);
 
-    for (const p of den.presets) {
-      row.appendChild(makeBodyChip(p));
-    }
+    for (const p of den.presets) row.appendChild(makeBodyChip(p));
   }
 
   function makeBodyChip(preset) {
@@ -101,7 +95,7 @@
     cx.imageSmoothingEnabled = false;
     const img = loadSprite(preset.id);
     const blit = () => cx.drawImage(img, 0, 0, den.FRAME_W, den.FRAME_H, 0, 0, c.width, c.height);
-    if (img.complete) blit(); else img.onload = blit;
+    if (img.complete) blit(); else { img.onload = blit; img.onerror = blit; }
 
     const lbl = document.createElement('div');
     lbl.className = 'lbl';
@@ -119,18 +113,14 @@
 
   function renderStub(tab) {
     const wrap = document.createElement('div');
-    wrap.style.cssText = `
-      padding: 32px 16px;
-      text-align: center;
-      color: var(--text-muted, #8B949E);
-    `;
+    wrap.style.cssText = 'padding:32px 16px; text-align:center; color:var(--text-muted,#8B949E);';
     wrap.innerHTML = `
       <div style="font-size:14px; font-weight:600; color:var(--text,#E6EDF3); margin-bottom:6px;">
-        ${tab.label} — coming soon
+        ${tab.label} — coming next
       </div>
       <div style="font-size:12px; line-height:1.55;">
-        Once we generate the ${tab.label.toLowerCase()} variants via PixelLab,<br/>
-        you'll be able to pick options here and they'll layer onto your character.
+        Layered ${tab.label.toLowerCase()} overlays on top of the base sprite,<br/>
+        once we figure out the right pipeline.
       </div>
     `;
     content.appendChild(wrap);

@@ -43,10 +43,9 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
   static const int _dirN = 2;
   static const int _dirW = 3;
 
-  /// Feet are very near the bottom of the PixelLab frame, only a thin
-  /// transparent strip below them. 93% anchor places the feet on the
-  /// tile center.
-  static const double _feetAnchorY = 0.93;
+  /// Empirically tuned anchor so feet sit flush on the tile. Lower
+  /// values shift the sprite DOWN. 0.93 floated; 0.87 went through.
+  static const double _feetAnchorY = 0.90;
 
   int col;
   int row;

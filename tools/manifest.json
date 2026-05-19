@@ -140,6 +140,70 @@
       "width": 96,
       "height": 96,
       "seed": 505
+    },
+    {
+      "id": "rug_persian",
+      "prompt": "single isometric pixel art persian-style rug with red and gold pattern, flat top-down view, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 506
+    },
+    {
+      "id": "bookshelf",
+      "prompt": "single isometric pixel art tall wooden bookshelf filled with colorful books, simple flat shading, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 507
+    },
+    {
+      "id": "tv_crt",
+      "prompt": "single isometric pixel art retro CRT television on a low stand, dark grey casing with antenna, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 508
+    },
+    {
+      "id": "fridge",
+      "prompt": "single isometric pixel art white kitchen refrigerator with door handle, simple flat shading, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 509
+    },
+    {
+      "id": "desk_wood",
+      "prompt": "single isometric pixel art simple wooden desk with one drawer, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 510
+    },
+    {
+      "id": "computer",
+      "prompt": "single isometric pixel art beige retro desktop computer with CRT monitor and keyboard, simple flat shading, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 511
+    },
+    {
+      "id": "painting_landscape",
+      "prompt": "single isometric pixel art framed wall painting of a green landscape, gold frame, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 512
+    },
+    {
+      "id": "fish_tank",
+      "prompt": "single isometric pixel art glass fish tank aquarium with two orange fish and green plants inside, blue water, simple flat shading, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 513
     }
   ]
 }

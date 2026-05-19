@@ -16,7 +16,7 @@ class FurnitureComponent extends PositionComponent {
   static const double frameW = 96;
   static const double frameH = 96;
   static const double _baseAnchorY = 0.85;
-  static const double _scale = 1.6;
+  static const double _scale = 1.9;
 
   final String itemId;
   final int col;

@@ -8,7 +8,7 @@
 const FURNITURE_FRAME_W = 96;
 const FURNITURE_FRAME_H = 96;
 const FURNITURE_BASE_Y  = 0.85; // 0..1 where the object's base touches the floor
-const FURNITURE_SCALE   = 1.6;  // sized to roughly fit a 64px tile
+const FURNITURE_SCALE   = 1.9;  // matches the avatar scale so chair/sofa/etc sit proportionally next to characters
 
 const FURNITURE_CATALOG = [
   { id: 'chair_wood',  name: 'Wooden chair' },
@@ -17,6 +17,7 @@ const FURNITURE_CATALOG = [
   { id: 'plant_tall',  name: 'Tall plant' },
   { id: 'table_round', name: 'Round table' },
   { id: 'lamp_floor',  name: 'Floor lamp' },
+  { id: 'rug_persian', name: 'Persian rug' },
 ];
 
 // Per-room placements. Eventually this comes from /users/:id/room.
@@ -26,6 +27,7 @@ const ROOM_FURNITURE = [
   { id: 'lamp_floor',  col: 0, row: 0 },
   { id: 'table_round', col: 2, row: 2 },
   { id: 'bed_blue',    col: 8, row: 1 },
+  { id: 'rug_persian', col: 5, row: 4 },
   { id: 'plant_tall',  col: 9, row: 7 },
   { id: 'plant_tall',  col: 0, row: 7 },
   { id: 'chair_wood',  col: 6, row: 4 },

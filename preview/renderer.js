@@ -334,10 +334,11 @@ function avatarWorldPos(a) {
   return { x: p.x, y: p.y };
 }
 
-// Character feet sit ~93% down the 96-px frame in the two-stage
-// rd_advanced_animation output (very little padding below the feet).
-// Anchoring there lands feet on the tile center.
-const FEET_ANCHOR_Y = 0.93;
+// Empirically tuned so the character's feet sit flush on the tile.
+// Lower values shift the whole sprite DOWN (more of the frame extends
+// below the tile center). 0.93 was too high (feet floating);
+// 0.87 was too low (feet through floor).
+const FEET_ANCHOR_Y = 0.90;
 
 function drawAvatar(a) {
   if (!a.sprite.complete || a.sprite.naturalWidth === 0) return;

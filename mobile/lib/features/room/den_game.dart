@@ -54,6 +54,7 @@ class DenGame extends FlameGame with TapCallbacks {
       FurniturePlacement(id: 'lamp_floor',  col: 0, row: 0),
       FurniturePlacement(id: 'table_round', col: 2, row: 2),
       FurniturePlacement(id: 'bed_blue',    col: 8, row: 1),
+      FurniturePlacement(id: 'rug_persian', col: 5, row: 4),
       FurniturePlacement(id: 'plant_tall',  col: 9, row: 7),
       FurniturePlacement(id: 'plant_tall',  col: 0, row: 7),
       FurniturePlacement(id: 'chair_wood',  col: 6, row: 4),

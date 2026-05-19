@@ -130,6 +130,7 @@ async function main() {
       { id: 'plant_tall',  name: 'Tall plant' },
       { id: 'table_round', name: 'Round table' },
       { id: 'lamp_floor',  name: 'Floor lamp' },
+      { id: 'rug_persian', name: 'Persian rug' },
     ],
   }));
 
