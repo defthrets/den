@@ -6,7 +6,7 @@
     "preview_furniture": "preview/furniture"
   },
   "_notes": [
-    "Avatars use rd_animation__small_sprites (32x32, 4-dir walk+anims).",
+    "Avatars use rd_animation__four_angle_walking (48x48, 4-dir x 4-frame walk).",
     "Furniture uses rd_pro__isometric_asset (single iso object, neutral bg).",
     "Avatar presets pick up style cues from references/_global.png (a cropped Habbo character).",
     "Furniture skips reference because we want distinct objects per item, not character clones."
@@ -15,65 +15,65 @@
     {
       "id": "casual_blue",
       "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short brown hair, blue sweater, navy trousers",
-      "style": "rd_animation__small_sprites",
-      "width": 32,
-      "height": 32,
+      "style": "rd_animation__four_angle_walking",
+      "width": 48,
+      "height": 48,
       "seed": 400
     },
     {
       "id": "tank_redhead",
       "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, long red hair, orange tank top, blue shorts",
-      "style": "rd_animation__small_sprites",
-      "width": 32,
-      "height": 32,
+      "style": "rd_animation__four_angle_walking",
+      "width": 48,
+      "height": 48,
       "seed": 401
     },
     {
       "id": "punk_purple",
       "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short purple hair, dark grey jumper, black trousers",
-      "style": "rd_animation__small_sprites",
-      "width": 32,
-      "height": 32,
+      "style": "rd_animation__four_angle_walking",
+      "width": 48,
+      "height": 48,
       "seed": 402
     },
     {
       "id": "summer_yellow",
       "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short blonde hair, yellow t-shirt, brown shorts",
-      "style": "rd_animation__small_sprites",
-      "width": 32,
-      "height": 32,
+      "style": "rd_animation__four_angle_walking",
+      "width": 48,
+      "height": 48,
       "seed": 403
     },
     {
       "id": "athletic_green",
       "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short black hair, green athletic vest, white shorts, dark skin",
-      "style": "rd_animation__small_sprites",
-      "width": 32,
-      "height": 32,
+      "style": "rd_animation__four_angle_walking",
+      "width": 48,
+      "height": 48,
       "seed": 404
     },
     {
       "id": "scholar_glasses",
       "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short curly black hair, round glasses, beige cardigan, brown trousers",
-      "style": "rd_animation__small_sprites",
-      "width": 32,
-      "height": 32,
+      "style": "rd_animation__four_angle_walking",
+      "width": 48,
+      "height": 48,
       "seed": 405
     },
     {
       "id": "biker_black",
       "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, slicked dark hair, black leather jacket, black jeans, dark boots",
-      "style": "rd_animation__small_sprites",
-      "width": 32,
-      "height": 32,
+      "style": "rd_animation__four_angle_walking",
+      "width": 48,
+      "height": 48,
       "seed": 406
     },
     {
       "id": "retro_pink",
       "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, pink twin pigtails, pastel pink jumper, light blue skirt",
-      "style": "rd_animation__small_sprites",
-      "width": 32,
-      "height": 32,
+      "style": "rd_animation__four_angle_walking",
+      "width": 48,
+      "height": 48,
       "seed": 407
     }
   ],

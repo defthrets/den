@@ -27,22 +27,23 @@ class AvatarConfig {
 enum AvatarState { idle, walking }
 
 /// 4 facing directions match the sprite-sheet row order from
-/// `rd_animation__small_sprites`: row 0 = south, 1 = east, 2 = north,
-/// 3 = west.
-const int _dirS = 0;
+/// `rd_animation__four_angle_walking`: row 0 = north (back), 1 = east,
+/// 2 = south (front), 3 = west.
+const int _dirN = 0;
 const int _dirE = 1;
-const int _dirN = 2;
+const int _dirS = 2;
 const int _dirW = 3;
 
-/// Sprite-sheet-based avatar. The sheet is 5 cols × 4 rows of 32×32
-/// frames. Cols 0 and 1 are the walking cycle (we alternate while
-/// `state == walking`). Col 0 is idle. The row picks facing direction.
+/// Sprite-sheet-based avatar. The sheet is 4 cols × 4 rows of 48×48
+/// frames. Cols 0–3 are the walk cycle, col 0 doubles as the idle pose.
+/// The row picks facing direction.
 class AvatarComponent extends PositionComponent with TapCallbacks {
-  static const double frameW = 32;
-  static const double frameH = 32;
-  static const double _avatarScale = 4.0; // Habbo-scale chunky avatars
+  static const double frameW = 48;
+  static const double frameH = 48;
+  static const int walkFrames = 4;
+  static const double _avatarScale = 3.0; // 48-px sprites at 3x = denser pixels than the old 32@4
   static const double walkDurationPerTile = 0.85;
-  static const double walkFrameDuration = 0.22;
+  static const double walkFrameDuration = 0.18;
 
   int col;
   int row;
@@ -126,7 +127,7 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
 
       _walkFrameTimer += dt;
       if (_walkFrameTimer >= walkFrameDuration) {
-        _walkFrame = 1 - _walkFrame;
+        _walkFrame = (_walkFrame + 1) % walkFrames;
         _walkFrameTimer = 0;
       }
 

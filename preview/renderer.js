@@ -9,17 +9,17 @@ const TILE_H_HALF = TILE_H / 2;
 const ROOM_COLS = 10;
 const ROOM_ROWS = 8;
 
-const AVATAR_SCALE_BOOST = 4.0;   // chunky Habbo-scale avatars
+const AVATAR_SCALE_BOOST = 3.0;   // 48-px sprites — smaller pixels per character than the old 32-px
 
-// Sprite sheet layout (rd_animation__small_sprites): 5 cols × 4 rows of 32×32 frames.
-// Rows = facing direction (S, E, N, W). Cols 0-1 = walk cycle, col 2 = arm wave,
-// col 3 = looking, col 4 = surprised / lay down.
-const FRAME_W = 32;
-const FRAME_H = 32;
-const DIR_S = 0, DIR_E = 1, DIR_N = 2, DIR_W = 3;
+// Sprite sheet layout (rd_animation__four_angle_walking): 4 cols × 4 rows of 48×48 frames.
+// Rows = facing direction (N, E, S, W). Cols 0-3 = walk-cycle frames.
+const FRAME_W = 48;
+const FRAME_H = 48;
+const DIR_N = 0, DIR_E = 1, DIR_S = 2, DIR_W = 3;
+const WALK_FRAMES = 4;             // number of frames in the cycle
 
 const WALK_DURATION = 0.85;        // seconds per tile
-const WALK_FRAME_DURATION = 0.22;  // seconds per walk-cycle frame
+const WALK_FRAME_DURATION = 0.18;  // seconds per walk-cycle frame
 const BUBBLE_LIFETIME = 4.5;
 const BUBBLE_RISE_SPEED = 26;
 
@@ -511,10 +511,10 @@ function frame(dtMs) {
       // Update facing from the movement vector
       a.direction = directionFromMovement(a.target.col - a.col, a.target.row - a.row);
 
-      // Cycle the walk frame (cols 0 ↔ 1)
+      // Cycle the walk frame (cols 0 → 1 → 2 → 3 → 0 ...)
       a.walkFrameTimer += dt;
       if (a.walkFrameTimer >= WALK_FRAME_DURATION) {
-        a.walkFrame = 1 - a.walkFrame;
+        a.walkFrame = (a.walkFrame + 1) % WALK_FRAMES;
         a.walkFrameTimer = 0;
       }
 
