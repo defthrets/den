@@ -1,15 +1,17 @@
 {
   "outputs": {
-    "mobile": "mobile/assets/sprites",
-    "preview": "preview/sprites"
+    "mobile_avatars": "mobile/assets/sprites",
+    "preview_avatars": "preview/sprites",
+    "mobile_furniture": "mobile/assets/furniture",
+    "preview_furniture": "preview/furniture"
   },
   "_notes": [
-    "Each preset uses references/_global.png as input_image so RD can",
-    "mimic the classic Habbo Hotel style (oval heads, tiny dot eyes,",
-    "solid hair shapes, plain bodies, dark outlines). Prompts briefly",
-    "describe the reference and then specify per-character variations."
+    "Avatars use rd_animation__small_sprites (32x32, 4-dir walk+anims).",
+    "Furniture uses rd_pro__isometric_asset (single iso object, neutral bg).",
+    "Avatar presets pick up style cues from references/_global.png (a cropped Habbo character).",
+    "Furniture skips reference because we want distinct objects per item, not character clones."
   ],
-  "presets": [
+  "avatars": [
     {
       "id": "casual_blue",
       "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short brown hair, blue sweater, navy trousers",
@@ -41,6 +43,88 @@
       "width": 32,
       "height": 32,
       "seed": 403
+    },
+    {
+      "id": "athletic_green",
+      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short black hair, green athletic vest, white shorts, dark skin",
+      "style": "rd_animation__small_sprites",
+      "width": 32,
+      "height": 32,
+      "seed": 404
+    },
+    {
+      "id": "scholar_glasses",
+      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, short curly black hair, round glasses, beige cardigan, brown trousers",
+      "style": "rd_animation__small_sprites",
+      "width": 32,
+      "height": 32,
+      "seed": 405
+    },
+    {
+      "id": "biker_black",
+      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, slicked dark hair, black leather jacket, black jeans, dark boots",
+      "style": "rd_animation__small_sprites",
+      "width": 32,
+      "height": 32,
+      "seed": 406
+    },
+    {
+      "id": "retro_pink",
+      "prompt": "single character matching the Habbo Hotel pixel art style of the reference image, pink twin pigtails, pastel pink jumper, light blue skirt",
+      "style": "rd_animation__small_sprites",
+      "width": 32,
+      "height": 32,
+      "seed": 407
+    }
+  ],
+  "furniture": [
+    {
+      "id": "chair_wood",
+      "prompt": "single isometric pixel art wooden dining chair, simple flat shading, small footprint, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 500
+    },
+    {
+      "id": "sofa_red",
+      "prompt": "single isometric pixel art red two-seater sofa couch, plush cushions, simple flat shading, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 501
+    },
+    {
+      "id": "bed_blue",
+      "prompt": "single isometric pixel art bed with blue blanket and white pillow, simple flat shading, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 502
+    },
+    {
+      "id": "plant_tall",
+      "prompt": "single isometric pixel art tall potted houseplant with green leaves and terracotta pot, simple flat shading, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 503
+    },
+    {
+      "id": "table_round",
+      "prompt": "single isometric pixel art round wooden coffee table, simple flat shading, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 504
+    },
+    {
+      "id": "lamp_floor",
+      "prompt": "single isometric pixel art floor lamp with cream lampshade and brass stand, simple flat shading, neutral background, Habbo Hotel furniture style",
+      "style": "rd_plus__isometric_asset",
+      "width": 96,
+      "height": 96,
+      "seed": 505
     }
   ]
 }

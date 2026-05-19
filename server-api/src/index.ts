@@ -115,10 +115,27 @@ async function main() {
   // into the sprite at generation time.
   app.get('/catalog/wardrobe', async () => ({
     presets: [
-      { id: 'casual_blue',   name: 'Casual' },
-      { id: 'tank_redhead',  name: 'Tank' },
-      { id: 'punk_purple',   name: 'Punk' },
-      { id: 'summer_yellow', name: 'Summer' },
+      { id: 'casual_blue',     name: 'Casual' },
+      { id: 'tank_redhead',    name: 'Tank' },
+      { id: 'punk_purple',     name: 'Punk' },
+      { id: 'summer_yellow',   name: 'Summer' },
+      { id: 'athletic_green',  name: 'Athletic' },
+      { id: 'scholar_glasses', name: 'Scholar' },
+      { id: 'biker_black',     name: 'Biker' },
+      { id: 'retro_pink',      name: 'Retro' },
+    ],
+  }));
+
+  // ── GET /catalog/furniture — list of placeable items ────────────────────
+  // Sprite at /assets/furniture/<id>.png on the client.
+  app.get('/catalog/furniture', async () => ({
+    items: [
+      { id: 'chair_wood',  name: 'Wooden chair' },
+      { id: 'sofa_red',    name: 'Red sofa' },
+      { id: 'bed_blue',    name: 'Blue bed' },
+      { id: 'plant_tall',  name: 'Tall plant' },
+      { id: 'table_round', name: 'Round table' },
+      { id: 'lamp_floor',  name: 'Floor lamp' },
     ],
   }));
 

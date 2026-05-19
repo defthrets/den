@@ -330,6 +330,11 @@ function avatarWorldPos(a) {
   return { x: p.x, y: p.y };
 }
 
+// Character feet sit at ~87% down the frame; the remaining 13% is
+// transparent padding. We shift the drawn sprite DOWN by that padding
+// so the feet land on the tile center instead of the frame bottom.
+const FEET_ANCHOR_Y = 0.87;
+
 function drawAvatar(a) {
   if (!a.sprite.complete || a.sprite.naturalWidth === 0) return;
 
@@ -338,17 +343,17 @@ function drawAvatar(a) {
   const scale = zoom * AVATAR_SCALE_BOOST;
   const w = FRAME_W * scale;
   const h = FRAME_H * scale;
+  const padBelowFeet = (1 - FEET_ANCHOR_Y) * h;
 
-  // Shadow
+  // Shadow lives at the feet, not the frame bottom
   ctx.fillStyle = 'rgba(0,0,0,0.28)';
   ctx.beginPath();
-  ctx.ellipse(sx, sy - 1, 9 * scale, 2.6 * scale, 0, 0, Math.PI * 2);
+  ctx.ellipse(sx, sy, 9 * scale, 2.6 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
 
   // Idle bob
   const bob = a.state === 'idle' ? Math.sin(a.bob) * 0.5 * scale : 0;
 
-  // Pick the right cell from the sheet
   const frameCol = a.state === 'walking' ? a.walkFrame : 0;
   const frameRow = a.direction;
 
@@ -356,13 +361,15 @@ function drawAvatar(a) {
   ctx.drawImage(
     a.sprite,
     frameCol * FRAME_W, frameRow * FRAME_H, FRAME_W, FRAME_H,
-    Math.round(sx - w / 2), Math.round(sy - h + bob), Math.round(w), Math.round(h),
+    Math.round(sx - w / 2),
+    Math.round(sy - h + padBelowFeet + bob),
+    Math.round(w), Math.round(h),
   );
 
-  // Username dot above head
+  // Username dot above head — head top is at (sy - h + padBelowFeet) ish
   ctx.fillStyle = a.isMe ? PAL.accent : PAL.friendDot;
   ctx.beginPath();
-  ctx.arc(sx, sy - h + bob - 5, 3 * Math.max(1, zoom), 0, Math.PI * 2);
+  ctx.arc(sx, sy - h + padBelowFeet + bob - 5, 3 * Math.max(1, zoom), 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -370,7 +377,7 @@ function drawAvatar(a) {
 function spawnBubble(a, text) {
   const { x: wx, y: wy } = avatarWorldPos(a);
   const { sx, sy } = worldToScreen(wx, wy);
-  const headY = sy - FRAME_H * zoom * AVATAR_SCALE_BOOST - 4;
+  const headY = sy - FRAME_H * zoom * AVATAR_SCALE_BOOST * FEET_ANCHOR_Y - 4;
 
   // Push older bubbles from this avatar higher to stack neatly
   for (const b of bubbles) {
@@ -531,6 +538,11 @@ function frame(dtMs) {
       items.push({ depth: tileDepth(c, r), draw: () => drawFloorTile(c, r) });
     }
   }
+  // Furniture sits just above its floor tile, below avatars on the same tile,
+  // but blocks avatars standing behind it (lower col+row).
+  for (const f of ROOM_FURNITURE) {
+    items.push({ depth: tileDepth(f.col, f.row) + 2, draw: () => drawFurniture(f) });
+  }
   for (const a of avatars) {
     const liveCol = a.state === 'walking' && a.target
       ? a.target.col * easeInOut(a.walkT) + a.col * (1 - easeInOut(a.walkT))
@@ -610,10 +622,14 @@ window.den = {
   me,
   friend,
   presets: [
-    { id: 'casual_blue',   name: 'Casual' },
-    { id: 'tank_redhead',  name: 'Tank'   },
-    { id: 'punk_purple',   name: 'Punk'   },
-    { id: 'summer_yellow', name: 'Summer' },
+    { id: 'casual_blue',     name: 'Casual'   },
+    { id: 'tank_redhead',    name: 'Tank'     },
+    { id: 'punk_purple',     name: 'Punk'     },
+    { id: 'summer_yellow',   name: 'Summer'   },
+    { id: 'athletic_green',  name: 'Athletic' },
+    { id: 'scholar_glasses', name: 'Scholar'  },
+    { id: 'biker_black',     name: 'Biker'    },
+    { id: 'retro_pink',      name: 'Retro'    },
   ],
   FRAME_W,
   FRAME_H,
