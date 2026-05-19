@@ -115,10 +115,8 @@ async function main() {
   // into the sprite at generation time.
   app.get('/catalog/wardrobe', async () => ({
     presets: [
-      { id: 'casual_blue',     name: 'Casual' },
-      { id: 'athletic_green',  name: 'Athletic' },
-      { id: 'scholar_glasses', name: 'Scholar' },
-      { id: 'biker_black',     name: 'Biker' },
+      { id: 'casual_blue_boy',  name: 'Boy' },
+      { id: 'casual_blue_girl', name: 'Girl' },
     ],
   }));
 

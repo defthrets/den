@@ -10,34 +10,43 @@ import '../../../core/palette.dart';
 
 /// Avatar configuration. Sprite-based: a preset id picks one of the
 /// generated sprite sheets in assets/sprites/. Colour tinting is
-/// baked into the sheet itself — no runtime palette swapping.
+/// baked into the sheet at generation time.
 class AvatarConfig {
   final String preset;
-  const AvatarConfig({this.preset = 'casual_blue'});
+  const AvatarConfig({this.preset = 'casual_blue_boy'});
 
   AvatarConfig copyWith({String? preset}) =>
       AvatarConfig(preset: preset ?? this.preset);
 
   factory AvatarConfig.fromJson(Map<String, dynamic> j) =>
-      AvatarConfig(preset: (j['preset'] as String?) ?? 'casual_blue');
+      AvatarConfig(preset: (j['preset'] as String?) ?? 'casual_blue_boy');
 
   Map<String, dynamic> toServerPayload() => {'preset': preset};
 }
 
 enum AvatarState { idle, walking }
 
-/// Sprite-sheet-based avatar. Two-stage Retro Diffusion output:
-/// 2 cols × 2 rows of 96×96 frames — 4 walk-cycle frames, all
-/// camera-facing (no separate direction rows). Frame N is at
-/// (col = N % 2, row = N ~/ 2) in the grid. Frame 0 doubles as idle.
+/// PixelLab sprite-sheet avatar.
+/// Layout: 6 cols (walk frames) × 4 rows (facing direction). 92×92 each.
+/// Row order: 0=south, 1=east, 2=north, 3=west.
+/// Idle uses col 0 of the current direction's row.
 class AvatarComponent extends PositionComponent with TapCallbacks {
-  static const double frameW = 96;
-  static const double frameH = 96;
-  static const int walkFrames = 4;
-  static const int walkGridCols = 2;
-  static const double _avatarScale = 1.8; // matches furniture pixel density
+  static const double frameW = 92;
+  static const double frameH = 92;
+  static const int walkFrames = 6;
+  static const double _avatarScale = 1.8;
   static const double walkDurationPerTile = 0.85;
-  static const double walkFrameDuration = 0.18;
+  static const double walkFrameDuration = 0.14;
+
+  static const int _dirS = 0;
+  static const int _dirE = 1;
+  static const int _dirN = 2;
+  static const int _dirW = 3;
+
+  /// Feet are very near the bottom of the PixelLab frame, only a thin
+  /// transparent strip below them. 93% anchor places the feet on the
+  /// tile center.
+  static const double _feetAnchorY = 0.93;
 
   int col;
   int row;
@@ -55,11 +64,7 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
 
   int _walkFrame = 0;
   double _walkFrameTimer = 0;
-
-  /// Character's feet sit close to the bottom of the 96-px frame in
-  /// the two-stage rd_advanced_animation output. Anchoring at 93%
-  /// lands the feet on the tile center instead of the frame bottom.
-  static const double _feetAnchorY = 0.93;
+  int _direction = _dirS;
 
   AvatarComponent({
     required this.col,
@@ -102,6 +107,13 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
     _walkProgress = 0;
     _walkFrame = 0;
     _walkFrameTimer = 0;
+    final dcol = targetCol - col;
+    final drow = targetRow - row;
+    if (dcol.abs() >= drow.abs()) {
+      _direction = dcol >= 0 ? _dirE : _dirW;
+    } else {
+      _direction = drow >= 0 ? _dirS : _dirN;
+    }
   }
 
   Vector2 headWorldPosition() => Vector2(position.x, position.y - size.y);
@@ -151,9 +163,8 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
       Paint()..color = const Color(0x47000000),
     );
 
-    final frameIdx = _state == AvatarState.walking ? _walkFrame : 0;
-    final frameCol = frameIdx % walkGridCols;
-    final frameRow = frameIdx ~/ walkGridCols;
+    final frameCol = _state == AvatarState.walking ? _walkFrame : 0;
+    final frameRow = _direction;
 
     canvas.save();
     canvas.translate(0, bob);

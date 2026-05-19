@@ -10,9 +10,7 @@ class AvatarPreset {
 
 class Wardrobe {
   static const List<AvatarPreset> presets = [
-    AvatarPreset(id: 'casual_blue',     name: 'Casual'),
-    AvatarPreset(id: 'athletic_green',  name: 'Athletic'),
-    AvatarPreset(id: 'scholar_glasses', name: 'Scholar'),
-    AvatarPreset(id: 'biker_black',     name: 'Biker'),
+    AvatarPreset(id: 'casual_blue_boy',  name: 'Boy'),
+    AvatarPreset(id: 'casual_blue_girl', name: 'Girl'),
   ];
 }

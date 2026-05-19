@@ -51,24 +51,16 @@ PREVIEW_OUT.mkdir(parents=True, exist_ok=True)
 
 PRESETS = [
     {
-        "id": "casual_blue",
-        "description": "Habbo Hotel character, short brown hair, blue sweater, navy jeans, oval head with tiny dot eyes, no mouth, dark outline, simple flat shading",
-        "seed": 700,
+        "id": "casual_blue_boy",
+        "description": "Habbo Hotel boy avatar, short brown hair, plain blue sweater, navy jeans, oval head with detailed expressive face, small dot eyes with eyebrows, tiny smile, dark outline, flat shading, classic Habbo pixel art style",
+        "seed": 800,
+        "detail": "high",
     },
     {
-        "id": "athletic_green",
-        "description": "Habbo Hotel character, short black hair, green athletic vest, white shorts, dark brown skin, oval head with tiny dot eyes, no mouth, dark outline, simple flat shading",
-        "seed": 704,
-    },
-    {
-        "id": "scholar_glasses",
-        "description": "Habbo Hotel character, short curly black hair, round glasses, beige cardigan, brown trousers, oval head, no mouth, dark outline, simple flat shading",
-        "seed": 705,
-    },
-    {
-        "id": "biker_black",
-        "description": "Habbo Hotel character, slicked dark hair, black leather jacket, black jeans, dark boots, oval head with tiny dot eyes, no mouth, dark outline, simple flat shading",
-        "seed": 706,
+        "id": "casual_blue_girl",
+        "description": "Habbo Hotel girl avatar, shoulder-length brown hair, plain blue jumper, navy skirt, oval head with detailed expressive face, small dot eyes with eyebrows, tiny smile, dark outline, flat shading, classic Habbo pixel art style",
+        "seed": 801,
+        "detail": "high",
     },
 ]
 
@@ -115,7 +107,7 @@ def create_character(preset: dict) -> str:
         "image_size": {"width": 64, "height": 64},
         "outline": "thin",
         "shading": "flat",
-        "detail": "medium",
+        "detail": preset.get("detail", "medium"),
         "view": "side",
         "seed": preset["seed"],
     }
