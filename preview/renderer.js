@@ -25,7 +25,7 @@ const BUBBLE_LIFETIME = 4.5;
 const BUBBLE_RISE_SPEED = 26;
 
 // Bump when regenerating sprites so the browser fetches the new PNGs.
-const SPRITE_VERSION = 3;
+const SPRITE_VERSION = 4;
 
 const PAL = {
   skyTop:        '#1A2744',
@@ -624,7 +624,6 @@ window.den = {
     { id: 'athletic_green',  name: 'Athletic' },
     { id: 'scholar_glasses', name: 'Scholar'  },
     { id: 'biker_black',     name: 'Biker'    },
-    { id: 'retro_pink',      name: 'Retro'    },
   ],
   FRAME_W,
   FRAME_H,

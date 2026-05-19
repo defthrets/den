@@ -17,6 +17,5 @@ class Wardrobe {
     AvatarPreset(id: 'athletic_green',  name: 'Athletic'),
     AvatarPreset(id: 'scholar_glasses', name: 'Scholar'),
     AvatarPreset(id: 'biker_black',     name: 'Biker'),
-    AvatarPreset(id: 'retro_pink',      name: 'Retro'),
   ];
 }

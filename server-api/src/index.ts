@@ -122,7 +122,6 @@ async function main() {
       { id: 'athletic_green',  name: 'Athletic' },
       { id: 'scholar_glasses', name: 'Scholar' },
       { id: 'biker_black',     name: 'Biker' },
-      { id: 'retro_pink',      name: 'Retro' },
     ],
   }));
 

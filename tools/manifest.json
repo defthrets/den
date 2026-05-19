@@ -6,24 +6,25 @@
     "preview_furniture": "preview/furniture"
   },
   "_notes": [
-    "Avatars are generated in TWO stages so they match furniture pixel density (96px):",
-    "  Stage 1: rd_plus__default produces a neutral standing pose at 96x96.",
-    "  Stage 2: rd_advanced_animation__walking takes that pose as input_image",
-    "           and outputs a 192x192 sheet (2 cols x 2 rows of 96x96 walk frames).",
-    "Cost: ~0.03 + ~0.14 = ~0.17 per character. Single facing direction only.",
-    "Furniture uses single-stage rd_plus__isometric_asset."
+    "Avatars are generated in TWO stages:",
+    "  Stage 1: rd_plus__default with references/_global.png as reference_images",
+    "           — produces a neutral 96x96 standing pose in authentic Habbo style.",
+    "  Stage 2: rd_advanced_animation__walking takes that pose as input_image,",
+    "           returns a 192x192 sheet of 4 walk frames (2x2 grid).",
+    "Prompts explicitly call out the Habbo signatures (egg head, dot eyes, no mouth, dark outline).",
+    "Cost: ~0.03 + ~0.14 = ~0.17 per character. Single camera-facing direction only."
   ],
   "avatars": [
     {
       "id": "casual_blue",
       "kind": "two_stage",
       "stage1": {
-        "prompt": "Habbo Hotel character facing camera, standing neutral pose, short brown hair, blue sweater, navy jeans, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "prompt": "single Habbo Hotel avatar matching the reference image style, standing camera-facing neutral pose, short brown hair, blue sweater, navy jeans, egg-shaped head wider at the bottom flat on top, two tiny solid black dot eyes no whites, no mouth or just a single pixel line, solid hair block, plain body, dark outline silhouette, limited 5-color palette",
         "style": "rd_plus__default",
-        "width": 96, "height": 96, "seed": 600, "remove_bg": true
+        "width": 96, "height": 96, "seed": 700, "remove_bg": true
       },
       "stage2": {
-        "prompt": "slow neutral walking cycle",
+        "prompt": "slow neutral walking cycle, keep the same Habbo style",
         "style": "rd_advanced_animation__walking",
         "width": 96, "height": 96, "frames_duration": 4
       }
@@ -32,12 +33,12 @@
       "id": "tank_redhead",
       "kind": "two_stage",
       "stage1": {
-        "prompt": "Habbo Hotel character facing camera, standing neutral pose, long red hair, orange tank top, blue shorts, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "prompt": "single Habbo Hotel avatar matching the reference image style, standing camera-facing neutral pose, long red hair, orange tank top, blue shorts, egg-shaped head wider at the bottom flat on top, two tiny solid black dot eyes no whites, no mouth or just a single pixel line, solid hair block, plain body, dark outline silhouette, limited 5-color palette",
         "style": "rd_plus__default",
-        "width": 96, "height": 96, "seed": 601, "remove_bg": true
+        "width": 96, "height": 96, "seed": 701, "remove_bg": true
       },
       "stage2": {
-        "prompt": "slow neutral walking cycle",
+        "prompt": "slow neutral walking cycle, keep the same Habbo style",
         "style": "rd_advanced_animation__walking",
         "width": 96, "height": 96, "frames_duration": 4
       }
@@ -46,12 +47,12 @@
       "id": "punk_purple",
       "kind": "two_stage",
       "stage1": {
-        "prompt": "Habbo Hotel character facing camera, standing neutral pose, short purple hair, dark grey jumper, black trousers, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "prompt": "single Habbo Hotel avatar matching the reference image style, standing camera-facing neutral pose, short spiky purple hair, dark grey jumper, black trousers, egg-shaped head wider at the bottom flat on top, two tiny solid black dot eyes no whites, no mouth, solid hair block, plain body, dark outline silhouette, limited 5-color palette",
         "style": "rd_plus__default",
-        "width": 96, "height": 96, "seed": 602, "remove_bg": true
+        "width": 96, "height": 96, "seed": 702, "remove_bg": true
       },
       "stage2": {
-        "prompt": "slow neutral walking cycle",
+        "prompt": "slow neutral walking cycle, keep the same Habbo style",
         "style": "rd_advanced_animation__walking",
         "width": 96, "height": 96, "frames_duration": 4
       }
@@ -60,12 +61,12 @@
       "id": "summer_yellow",
       "kind": "two_stage",
       "stage1": {
-        "prompt": "Habbo Hotel character facing camera, standing neutral pose, short blonde hair, yellow t-shirt, brown shorts, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "prompt": "single Habbo Hotel avatar matching the reference image style, standing camera-facing neutral pose, short blonde hair, yellow t-shirt, brown shorts, egg-shaped head wider at the bottom flat on top, two tiny solid black dot eyes no whites, no mouth, solid hair block, plain body, dark outline silhouette, limited 5-color palette",
         "style": "rd_plus__default",
-        "width": 96, "height": 96, "seed": 603, "remove_bg": true
+        "width": 96, "height": 96, "seed": 703, "remove_bg": true
       },
       "stage2": {
-        "prompt": "slow neutral walking cycle",
+        "prompt": "slow neutral walking cycle, keep the same Habbo style",
         "style": "rd_advanced_animation__walking",
         "width": 96, "height": 96, "frames_duration": 4
       }
@@ -74,12 +75,12 @@
       "id": "athletic_green",
       "kind": "two_stage",
       "stage1": {
-        "prompt": "Habbo Hotel character facing camera, standing neutral pose, short black hair, green athletic vest, white shorts, dark skin, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "prompt": "single Habbo Hotel avatar matching the reference image style, standing camera-facing neutral pose, short black hair, green athletic vest, white shorts, dark brown skin, egg-shaped head wider at the bottom flat on top, two tiny solid black dot eyes no whites, no mouth, solid hair block, plain body, dark outline silhouette, limited 5-color palette",
         "style": "rd_plus__default",
-        "width": 96, "height": 96, "seed": 604, "remove_bg": true
+        "width": 96, "height": 96, "seed": 704, "remove_bg": true
       },
       "stage2": {
-        "prompt": "slow neutral walking cycle",
+        "prompt": "slow neutral walking cycle, keep the same Habbo style",
         "style": "rd_advanced_animation__walking",
         "width": 96, "height": 96, "frames_duration": 4
       }
@@ -88,12 +89,12 @@
       "id": "scholar_glasses",
       "kind": "two_stage",
       "stage1": {
-        "prompt": "Habbo Hotel character facing camera, standing neutral pose, short curly black hair, round glasses, beige cardigan, brown trousers, oval head, simple pixel art, dark outline",
+        "prompt": "single Habbo Hotel avatar matching the reference image style, standing camera-facing neutral pose, short curly black hair, round glasses over the dot eyes, beige cardigan, brown trousers, egg-shaped head wider at the bottom flat on top, solid hair block, plain body, dark outline silhouette, limited 5-color palette",
         "style": "rd_plus__default",
-        "width": 96, "height": 96, "seed": 605, "remove_bg": true
+        "width": 96, "height": 96, "seed": 705, "remove_bg": true
       },
       "stage2": {
-        "prompt": "slow neutral walking cycle",
+        "prompt": "slow neutral walking cycle, keep the same Habbo style",
         "style": "rd_advanced_animation__walking",
         "width": 96, "height": 96, "frames_duration": 4
       }
@@ -102,12 +103,12 @@
       "id": "biker_black",
       "kind": "two_stage",
       "stage1": {
-        "prompt": "Habbo Hotel character facing camera, standing neutral pose, slicked dark hair, black leather jacket, black jeans, dark boots, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "prompt": "single Habbo Hotel avatar matching the reference image style, standing camera-facing neutral pose, slicked dark hair, black leather jacket, black jeans, dark boots, egg-shaped head wider at the bottom flat on top, two tiny solid black dot eyes no whites, no mouth, solid hair block, plain body, dark outline silhouette, limited 5-color palette",
         "style": "rd_plus__default",
-        "width": 96, "height": 96, "seed": 606, "remove_bg": true
+        "width": 96, "height": 96, "seed": 706, "remove_bg": true
       },
       "stage2": {
-        "prompt": "slow neutral walking cycle",
+        "prompt": "slow neutral walking cycle, keep the same Habbo style",
         "style": "rd_advanced_animation__walking",
         "width": 96, "height": 96, "frames_duration": 4
       }
@@ -116,12 +117,12 @@
       "id": "retro_pink",
       "kind": "two_stage",
       "stage1": {
-        "prompt": "Habbo Hotel character facing camera, standing neutral pose, pink twin pigtails, pastel pink jumper, light blue skirt, oval head, tiny dot eyes, simple pixel art, dark outline",
+        "prompt": "single Habbo Hotel avatar matching the reference image style, standing camera-facing neutral pose, pink twin pigtails, pastel pink jumper, light blue skirt, egg-shaped head wider at the bottom flat on top, two tiny solid black dot eyes no whites, no mouth, solid hair block, plain body, dark outline silhouette, limited 5-color palette",
         "style": "rd_plus__default",
-        "width": 96, "height": 96, "seed": 607, "remove_bg": true
+        "width": 96, "height": 96, "seed": 707, "remove_bg": true
       },
       "stage2": {
-        "prompt": "slow neutral walking cycle",
+        "prompt": "slow neutral walking cycle, keep the same Habbo style",
         "style": "rd_advanced_animation__walking",
         "width": 96, "height": 96, "frames_duration": 4
       }

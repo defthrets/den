@@ -89,8 +89,15 @@ async function generateSingle(item) {
 
 /** Two-stage: static -> animated. Returns the animated sheet. */
 async function generateTwoStage(item) {
-  // Stage 1
-  const stage1Body = buildBody(item.stage1);
+  // Stage 1: optionally feed a Habbo-style reference as `reference_images`
+  // so the rd_plus model anchors to the right visual language.
+  const stage1Extra = {};
+  const ref = await loadReferenceImage(item.id);
+  if (ref) {
+    stage1Extra.reference_images = [ref.base64];
+    process.stdout.write(`(ref) `);
+  }
+  const stage1Body = buildBody(item.stage1, stage1Extra);
   process.stdout.write('s1... ');
   const s1 = await callApi(stage1Body);
   if (!s1.base64_images || s1.base64_images.length === 0) {
