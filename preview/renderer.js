@@ -555,14 +555,20 @@ function frame(dtMs) {
   // Furniture + avatars share the 1000 base so they still depth-sort
   // correctly against each other across tiles.
   const pickedUpIdx = window.editor?.state?.pickedUpIndex ?? -1;
+  const dragCol = window.editor?.state?.dragCol;
+  const dragRow = window.editor?.state?.dragRow;
   for (let i = 0; i < ROOM_FURNITURE.length; i++) {
-    const f = ROOM_FURNITURE[i];
+    let f = ROOM_FURNITURE[i];
+    const pickedUp = i === pickedUpIdx;
+    // While dragging, render the picked-up item at the drag tile so it
+    // visually follows the cursor/finger.
+    if (pickedUp && dragCol != null && dragRow != null) {
+      f = { ...f, col: dragCol, row: dragRow };
+    }
     const meta = FURNITURE_BY_ID[f.id];
     const isFloor = meta?.layer === 'floor';
     const base = isFloor ? 500 : 1000;
     const offset = isFloor ? 0 : 2;
-    const pickedUp = i === pickedUpIdx;
-    // Picked-up items render on top of everything else so the glow is visible
     const depth = pickedUp ? 5000 : base + tileDepth(f.col, f.row) + offset;
     items.push({ depth, draw: () => drawFurniture(f, { pickedUp }) });
   }
@@ -591,12 +597,17 @@ function loop(now) {
 requestAnimationFrame(loop);
 
 // ── Input: tap to walk ──────────────────────────────────────────────────
-// Tile-click handling. Long-press is detected by comparing pointerdown
-// and pointerup timestamps; in edit mode this lets us distinguish
-// "rotate" (short tap) from "delete" (long press).
+// Pointer routing:
+//   - In editor MOVE mode, pointerdown on a placed item starts a drag.
+//     pointermove follows the cursor; pointerup drops at the current tile.
+//   - In editor PLACE mode (default), pointerdown/up just records a tap
+//     whose duration controls rotate (short) vs delete (long-press).
+//   - Outside the editor, pointerup walks the avatar to the tile.
 let _downAt = 0;
 let _downTile = null;
-canvas.addEventListener('pointerdown', (e) => {
+let _dragging = false;
+
+function tileFromEvent(e) {
   const rect = canvas.getBoundingClientRect();
   const px = e.clientX - rect.left;
   const py = e.clientY - rect.top;
@@ -604,17 +615,46 @@ canvas.addEventListener('pointerdown', (e) => {
   const t = screenToTile(wx, wy);
   const tc = Math.round(t.col);
   const tr = Math.round(t.row);
-  if (tc < 0 || tc >= ROOM_COLS || tr < 0 || tr >= ROOM_ROWS) return;
+  if (tc < 0 || tc >= ROOM_COLS || tr < 0 || tr >= ROOM_ROWS) return null;
+  return { col: tc, row: tr };
+}
+
+canvas.addEventListener('pointerdown', (e) => {
+  const tile = tileFromEvent(e);
+  if (!tile) return;
   _downAt = Date.now();
-  _downTile = { col: tc, row: tr };
+  _downTile = tile;
+  _dragging = false;
+
+  // Move-mode pickup begins immediately on pointerdown
+  if (window.editor?.state.active && window.editor.state.mode === 'move') {
+    if (window.editor.onDragStart(tile.col, tile.row)) {
+      _dragging = true;
+      canvas.setPointerCapture(e.pointerId);
+    }
+  }
 });
+
+canvas.addEventListener('pointermove', (e) => {
+  if (!_dragging) return;
+  const tile = tileFromEvent(e);
+  if (tile) window.editor.onDragMove(tile.col, tile.row);
+});
+
 canvas.addEventListener('pointerup', (e) => {
   if (!_downTile) return;
   const dur = Date.now() - _downAt;
   const tile = _downTile;
   _downTile = null;
 
-  // Editor intercepts first
+  if (_dragging) {
+    const dropTile = tileFromEvent(e) || tile;
+    window.editor.onDragEnd(dropTile.col, dropTile.row);
+    _dragging = false;
+    return;
+  }
+
+  // Editor intercepts taps (place / rotate / delete)
   if (window.editor && window.editor.state.active) {
     window.editor.onTileClick(tile.col, tile.row, dur);
     return;
@@ -625,7 +665,11 @@ canvas.addEventListener('pointerup', (e) => {
   me.state = 'walking';
   me.walkT = 0;
 });
-canvas.addEventListener('pointercancel', () => { _downTile = null; });
+
+canvas.addEventListener('pointercancel', () => {
+  if (_dragging) { window.editor.cancelDrag(); _dragging = false; }
+  _downTile = null;
+});
 
 // ── Chat input interactions ────────────────────────────────────────────
 const input    = document.getElementById('msgInput');

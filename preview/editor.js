@@ -22,6 +22,8 @@
     activeCategory: FURNITURE_CATEGORIES[0].id,
     selectedId: null,       // palette item (place mode)
     pickedUpIndex: -1,      // index in ROOM_FURNITURE while moving
+    dragCol: null,          // current drag-hover tile (drives render)
+    dragRow: null,
   };
 
   // ── Palette / chips ────────────────────────────────────────────────
@@ -178,5 +180,48 @@
     return true;
   }
 
-  window.editor = { state, onTileClick };
+  // ── Drag handlers (move mode) ──────────────────────────────────────
+  function onDragStart(col, row) {
+    if (!state.active || state.mode !== 'move') return false;
+    const hit = furnitureAtTile(col, row);
+    if (!hit) return false;
+    state.pickedUpIndex = hit.index;
+    state.dragCol = col;
+    state.dragRow = row;
+    document.body.classList.add('editor-picked-up');
+    syncHeader();
+    return true;
+  }
+  function onDragMove(col, row) {
+    if (state.pickedUpIndex < 0) return false;
+    state.dragCol = col;
+    state.dragRow = row;
+    return true;
+  }
+  function onDragEnd(col, row) {
+    if (state.pickedUpIndex < 0) return false;
+    const item = ROOM_FURNITURE[state.pickedUpIndex];
+    const meta = FURNITURE_BY_ID[item.id];
+    const [fw, fh] = meta?.footprint || [1, 1];
+    if (col != null && canPlaceFootprint(col, row, fw, fh, state.pickedUpIndex)) {
+      item.col = col;
+      item.row = row;
+    }
+    state.pickedUpIndex = -1;
+    state.dragCol = null;
+    state.dragRow = null;
+    document.body.classList.remove('editor-picked-up');
+    syncHeader();
+    return true;
+  }
+  function cancelDrag() {
+    if (state.pickedUpIndex < 0) return;
+    state.pickedUpIndex = -1;
+    state.dragCol = null;
+    state.dragRow = null;
+    document.body.classList.remove('editor-picked-up');
+    syncHeader();
+  }
+
+  window.editor = { state, onTileClick, onDragStart, onDragMove, onDragEnd, cancelDrag };
 })();
