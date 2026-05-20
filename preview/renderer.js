@@ -196,10 +196,15 @@ function makeAvatar(userId, col, row, isMe, cfg) {
 }
 
 function directionFromMovement(dcol, drow) {
-  if (Math.abs(dcol) >= Math.abs(drow)) {
-    return dcol >= 0 ? DIR_E : DIR_W;
+  // Work in screen space so "south" = visually down, not grid-row+.
+  // Iso: screen_x ∝ (dcol - drow), screen_y ∝ (dcol + drow), with tile 64×32
+  // so a unit of (dcol - drow) is twice as wide as a unit of (dcol + drow).
+  const sx = dcol - drow;
+  const sy = dcol + drow;
+  if (Math.abs(2 * sx) > Math.abs(sy)) {
+    return sx >= 0 ? DIR_E : DIR_W;
   }
-  return drow >= 0 ? DIR_S : DIR_N;
+  return sy >= 0 ? DIR_S : DIR_N;
 }
 
 // ── Layout ───────────────────────────────────────────────────────────────

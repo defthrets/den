@@ -111,10 +111,14 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
     _walkFrameTimer = 0;
     final dcol = targetCol - col;
     final drow = targetRow - row;
-    if (dcol.abs() >= drow.abs()) {
-      _direction = dcol >= 0 ? _dirE : _dirW;
+    // Screen-space: "south" = visually down. Iso tiles are 64×32 so a unit
+    // of (dcol - drow) is twice as wide as a unit of (dcol + drow).
+    final sx = dcol - drow;
+    final sy = dcol + drow;
+    if ((2 * sx).abs() > sy.abs()) {
+      _direction = sx >= 0 ? _dirE : _dirW;
     } else {
-      _direction = drow >= 0 ? _dirS : _dirN;
+      _direction = sy >= 0 ? _dirS : _dirN;
     }
   }
 
