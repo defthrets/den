@@ -9,7 +9,10 @@ const TILE_H_HALF = TILE_H / 2;
 const ROOM_COLS = 10;
 const ROOM_ROWS = 8;
 
-const AVATAR_SCALE_BOOST = 1.8;   // 92-px PixelLab sprites
+const AVATAR_SCALE_BOOST = 1.5;   // slightly smaller overall
+// Squish on Y, slight stretch on X → "shorter and fatter" Habbo look
+const AVATAR_X_FACTOR = 1.05;
+const AVATAR_Y_FACTOR = 0.88;
 
 // Sprite sheet layout (PixelLab create-character + template walk):
 //   6 cols (walk-cycle frames) × 4 rows (facing direction). 92×92 each.
@@ -346,8 +349,8 @@ function drawAvatar(a) {
   const { x: wx, y: wy } = avatarWorldPos(a);
   const { sx, sy } = worldToScreen(wx, wy);
   const scale = zoom * AVATAR_SCALE_BOOST;
-  const w = FRAME_W * scale;
-  const h = FRAME_H * scale;
+  const w = FRAME_W * scale * AVATAR_X_FACTOR;
+  const h = FRAME_H * scale * AVATAR_Y_FACTOR;
   const padBelowFeet = (1 - FEET_ANCHOR_Y) * h;
 
   // Shadow lives at the feet, not the frame bottom
@@ -383,7 +386,7 @@ function drawAvatar(a) {
 function spawnBubble(a, text) {
   const { x: wx, y: wy } = avatarWorldPos(a);
   const { sx, sy } = worldToScreen(wx, wy);
-  const headY = sy - FRAME_H * zoom * AVATAR_SCALE_BOOST * FEET_ANCHOR_Y - 4;
+  const headY = sy - FRAME_H * zoom * AVATAR_SCALE_BOOST * AVATAR_Y_FACTOR * FEET_ANCHOR_Y - 4;
 
   // Push older bubbles from this avatar higher to stack neatly
   for (const b of bubbles) {

@@ -16,14 +16,17 @@ class FurnitureComponent extends PositionComponent {
   static const double frameW = 96;
   static const double frameH = 96;
   static const double _baseAnchorY = 0.85;
-  static const double _scale = 1.9;
+  // Overall furniture scale — smaller now so 1×1 items fit a tile.
+  static const double _baseScale = 1.05;
 
   final String itemId;
   final int col;
   final int row;
-  // Set to true for flat floor decals like rugs — they get a lower
-  // priority base so they always render below standing furniture +
-  // avatars (regardless of tile depth).
+  /// Per-piece scale multiplier (e.g. sofa 1.7 to span 2 tiles, lamp 0.85).
+  final double pieceScale;
+  /// Footprint in tiles, e.g. [2,1] for a sofa.
+  final List<int> footprint;
+  /// Floor decals (rugs) render below everything that stands on the floor.
   final bool floorLayer;
   ui.Image? _sprite;
 
@@ -31,16 +34,29 @@ class FurnitureComponent extends PositionComponent {
     required this.itemId,
     required this.col,
     required this.row,
+    this.pieceScale = 1.0,
+    this.footprint = const [1, 1],
     this.floorLayer = false,
   }) : super(
-          size: Vector2(frameW * _scale, frameH * _scale),
+          size: Vector2(frameW * _baseScale * pieceScale, frameH * _baseScale * pieceScale),
           anchor: Anchor(0.5, _baseAnchorY),
           priority: floorLayer
-              ? 500 + tileDepth(col, row)
-              : 1000 + tileDepth(col, row) + 2,
+              ? 500 + tileDepth(col + (footprint[0] - 1) ~/ 2,
+                                row + (footprint[1] - 1) ~/ 2)
+              : 1000 + tileDepth(col + (footprint[0] - 1) ~/ 2,
+                                  row + (footprint[1] - 1) ~/ 2) + 2,
         ) {
-    final s = tileToScreen(col, row);
-    position = Vector2(s.dx, s.dy);
+    // Centre on the footprint midpoint so multi-tile items straddle their tiles.
+    final cx = col + (footprint[0] - 1) / 2.0;
+    final cy = row + (footprint[1] - 1) / 2.0;
+    final s = tileToScreen(cx.round(), cy.round());
+    // For fractional centres (even footprint dims) shift in iso coords
+    final dxCol = (footprint[0] - 1) / 2.0 - ((footprint[0] - 1) ~/ 2);
+    final dxRow = (footprint[1] - 1) / 2.0 - ((footprint[1] - 1) ~/ 2);
+    position = Vector2(
+      s.dx + (dxCol - dxRow) * 32,  // iso X = (dcol - drow) * TILE_W/2
+      s.dy + (dxCol + dxRow) * 16,  // iso Y = (dcol + drow) * TILE_H/2
+    );
   }
 
   @override

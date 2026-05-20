@@ -34,7 +34,10 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
   static const double frameW = 92;
   static const double frameH = 92;
   static const int walkFrames = 6;
-  static const double _avatarScale = 1.8;
+  static const double _avatarScale = 1.5;
+  // "shorter and fatter" Habbo proportions — squish vertical, slight horizontal stretch
+  static const double _xFactor = 1.05;
+  static const double _yFactor = 0.88;
   static const double walkDurationPerTile = 0.85;
   static const double walkFrameDuration = 0.14;
 
@@ -73,7 +76,7 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
     AvatarConfig? config,
   })  : _config = config ?? const AvatarConfig(),
         super(
-          size: Vector2(frameW * _avatarScale, frameH * _avatarScale),
+          size: Vector2(frameW * _avatarScale * _xFactor, frameH * _avatarScale * _yFactor),
           anchor: Anchor(0.5, _feetAnchorY),
           priority: 1000 + tileDepth(col, row) + 5,
         ) {
