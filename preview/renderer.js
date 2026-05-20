@@ -9,7 +9,7 @@ const TILE_H_HALF = TILE_H / 2;
 const ROOM_COLS = 10;
 const ROOM_ROWS = 8;
 
-const AVATAR_SCALE_BOOST = 1.5;   // slightly smaller overall
+const AVATAR_SCALE_BOOST = 0.5;   // source PNGs now upscaled 3x; this keeps visual size
 // Squish on Y, slight stretch on X → "shorter and fatter" Habbo look
 const AVATAR_X_FACTOR = 1.05;
 const AVATAR_Y_FACTOR = 0.88;
@@ -17,8 +17,8 @@ const AVATAR_Y_FACTOR = 0.88;
 // Sprite sheet layout (PixelLab create-character + template walk):
 //   6 cols (walk-cycle frames) × 4 rows (facing direction). 92×92 each.
 //   Rows: 0=south, 1=east, 2=north, 3=west.
-const FRAME_W = 92;
-const FRAME_H = 92;
+const FRAME_W = 276;  // 92 × 3 (nearest-neighbor upscale)
+const FRAME_H = 276;
 const WALK_FRAMES = 6;
 const DIR_S = 0, DIR_E = 1, DIR_N = 2, DIR_W = 3;
 
@@ -28,7 +28,7 @@ const BUBBLE_LIFETIME = 4.5;
 const BUBBLE_RISE_SPEED = 26;
 
 // Bump when regenerating sprites so the browser fetches the new PNGs.
-const SPRITE_VERSION = 15;
+const SPRITE_VERSION = 16;
 
 const PAL = {
   skyTop:        '#1A2744',

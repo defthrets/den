@@ -31,10 +31,10 @@ enum AvatarState { idle, walking }
 /// Row order: 0=south, 1=east, 2=north, 3=west.
 /// Idle uses col 0 of the current direction's row.
 class AvatarComponent extends PositionComponent with TapCallbacks {
-  static const double frameW = 92;
-  static const double frameH = 92;
+  static const double frameW = 276;  // 92 × 3 (nearest-neighbor upscale)
+  static const double frameH = 276;
   static const int walkFrames = 6;
-  static const double _avatarScale = 1.5;
+  static const double _avatarScale = 0.5;  // 1.5 / 3 — keeps visual size after 3x source upscale
   // "shorter and fatter" Habbo proportions — squish vertical, slight horizontal stretch
   static const double _xFactor = 1.05;
   static const double _yFactor = 0.88;
@@ -181,8 +181,8 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
     canvas.drawOval(
       Rect.fromCenter(
         center: Offset(size.x / 2, size.y * _feetAnchorY),
-        width: 18 * _avatarScale,
-        height: 5 * _avatarScale,
+        width: 54 * _avatarScale,
+        height: 15 * _avatarScale,
       ),
       Paint()..color = const Color(0x47000000),
     );
