@@ -54,7 +54,7 @@ CATALOG = [
     ("rug_persian", "persian rug with red and gold ornate pattern, flat on the floor, Habbo Hotel furniture style", 906),
     ("bookshelf",   "tall wooden bookshelf filled with colorful books, Habbo Hotel furniture style", 907),
     ("tv_crt",      "retro CRT television on a low stand with antenna, dark grey casing, Habbo Hotel furniture style", 908),
-    ("fridge",      "white kitchen refrigerator with chrome handle, Habbo Hotel furniture style", 909),
+    ("fridge",      "tall white kitchen appliance with a door, Habbo Hotel furniture style", 909),
     ("desk_wood",   "small wooden desk with one drawer, Habbo Hotel furniture style", 910),
     ("computer",    "beige retro desktop computer with CRT monitor and keyboard, Habbo Hotel furniture style", 911),
     ("fish_tank",   "rectangular glass aquarium with two orange fish, green plants and blue water, Habbo Hotel furniture style", 912),
@@ -94,10 +94,13 @@ def decode_rgba(img_data: dict) -> Image.Image:
     return Image.frombytes("RGBA", (w, h), raw)
 
 def generate_item(item_id: str, description: str, seed: int) -> Image.Image:
-    print(f"  POST /objects...", end="", flush=True)
+    # Generate all 8 rotation directions, then keep only the south-east
+    # frame — that's the iso-aligned 3/4 view Habbo uses.
+    # Horizontal flip at render time gives the south-west variant.
+    print(f"  POST /objects (8-dir)...", end="", flush=True)
     r = api_post("/objects", {
         "description": description,
-        "directions": 1,
+        "directions": 8,
         "image_size": {"width": SIZE, "height": SIZE},
         "view": "low top-down",
         "n_frames": 1,
@@ -137,6 +140,11 @@ def _extract_image(resp: dict) -> Image.Image:
         return decode_rgba(resp["image"])
     storage = resp.get("storage_urls")
     if isinstance(storage, dict):
+        # Prefer south-east (iso 3/4 view) when available
+        for preferred in ("south-east", "unknown"):
+            if preferred in storage and isinstance(storage[preferred], str):
+                return _fetch_png(storage[preferred])
+        # Fall back to the first http URL we find
         for _key, url in storage.items():
             if isinstance(url, str) and url.startswith("http"):
                 return _fetch_png(url)
