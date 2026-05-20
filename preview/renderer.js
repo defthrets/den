@@ -424,7 +424,7 @@ function updateBubbles(dt) {
 }
 
 function drawBubbles() {
-  ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+  ctx.font = 'bold 14px "Pixelify Sans", "Courier New", monospace';
   ctx.textBaseline = 'middle';
   ctx.textAlign = 'left';
 
