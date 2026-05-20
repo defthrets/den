@@ -679,8 +679,10 @@ canvas.addEventListener('pointerup', (e) => {
   // Walk the avatar — unless the destination is blocked by furniture.
   if (typeof isTileBlocked === 'function' && isTileBlocked(tile.col, tile.row)) return;
   // Queue the click. If idle, start moving immediately; otherwise let the
-  // current step finish before consuming the next.
+  // current step finish before consuming the next. Cap the queue at 3
+  // pending destinations — beyond that, drop the click.
   if (me.state === 'walking' && me.target) {
+    if (me.pathQueue.length >= 3) return;
     me.pathQueue.push(tile);
   } else {
     me.target = tile;

@@ -105,6 +105,8 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
 
   void walkTo(int targetCol, int targetRow) {
     if (_state == AvatarState.walking) {
+      // Cap the queue at 3 pending destinations; drop extra clicks.
+      if (_pathQueue.length >= 3) return;
       _pathQueue.add([targetCol, targetRow]);
       return;
     }
