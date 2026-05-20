@@ -173,7 +173,7 @@ const ROOM_CX = 32;
 const ROOM_CY = 128;
 const ROOM_W = 576;
 const FACE_H = 5;
-const WALL_H = 64;
+const WALL_H = 128;
 
 const me     = makeAvatar('me',     5, 5, true,  { preset: 'casual_blue_boy' });
 const friend = makeAvatar('friend', 3, 3, false, { preset: 'casual_blue_girl' });
