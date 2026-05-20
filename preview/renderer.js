@@ -219,7 +219,7 @@ function resize() {
   ctx.imageSmoothingEnabled = false;
   viewportW = rect.width;
   viewportH = rect.height;
-  zoom = (viewportW * 0.92) / ROOM_W;
+  zoom = (viewportW * 1.0) / ROOM_W;
 }
 window.addEventListener('resize', resize);
 resize();
