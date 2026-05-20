@@ -41,7 +41,7 @@ const FURNITURE_CATALOG = [
   // ── Decor
   { id: 'plant_tall',  name: 'Tall plant',   category: 'decor',      scale: 1.0  },
   { id: 'lamp_floor',  name: 'Floor lamp',   category: 'decor',      scale: 0.85 },
-  { id: 'rug_persian', name: 'Persian rug',  category: 'decor',      scale: 1.1  },
+  { id: 'rug_persian', name: 'Persian rug',  category: 'decor',      scale: 1.1, layer: 'floor' },
   { id: 'painting',    name: 'Painting',     category: 'decor',      scale: 0.7  },
   { id: 'bookshelf',   name: 'Bookshelf',    category: 'decor',      scale: 1.2  },
   // ── Structures

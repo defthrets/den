@@ -21,16 +21,23 @@ class FurnitureComponent extends PositionComponent {
   final String itemId;
   final int col;
   final int row;
+  // Set to true for flat floor decals like rugs — they get a lower
+  // priority base so they always render below standing furniture +
+  // avatars (regardless of tile depth).
+  final bool floorLayer;
   ui.Image? _sprite;
 
   FurnitureComponent({
     required this.itemId,
     required this.col,
     required this.row,
+    this.floorLayer = false,
   }) : super(
           size: Vector2(frameW * _scale, frameH * _scale),
           anchor: Anchor(0.5, _baseAnchorY),
-          priority: tileDepth(col, row) + 2,
+          priority: floorLayer
+              ? 500 + tileDepth(col, row)
+              : 1000 + tileDepth(col, row) + 2,
         ) {
     final s = tileToScreen(col, row);
     position = Vector2(s.dx, s.dy);

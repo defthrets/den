@@ -75,7 +75,7 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
         super(
           size: Vector2(frameW * _avatarScale, frameH * _avatarScale),
           anchor: Anchor(0.5, _feetAnchorY),
-          priority: tileDepth(col, row) + 5,
+          priority: 1000 + tileDepth(col, row) + 5,
         ) {
     _bobPhase = Random().nextDouble() * pi * 2;
     _syncPosition();
@@ -96,7 +96,7 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
   void _syncPosition() {
     final s = tileToScreen(col, row);
     position = Vector2(s.dx, s.dy);
-    priority = tileDepth(col, row) + 5;
+    priority = 1000 + tileDepth(col, row) + 5;
   }
 
   void walkTo(int targetCol, int targetRow) {

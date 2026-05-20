@@ -543,10 +543,20 @@ function frame(dtMs) {
       items.push({ depth: tileDepth(c, r), draw: () => drawFloorTile(c, r) });
     }
   }
-  // Furniture sits just above its floor tile, below avatars on the same tile,
-  // but blocks avatars standing behind it (lower col+row).
+  // Layer system so rugs/floor decals always sit BELOW everything that
+  // stands on the floor, regardless of which tile they're on:
+  //   floor tiles:       tile_depth                    (~0–160)
+  //   floor decals/rugs: 500 + tile_depth              (500–660)
+  //   3D furniture:      1000 + tile_depth + 2         (1002–1162)
+  //   avatars:           1000 + tile_depth + 5         (1005–1165)
+  // Furniture + avatars share the 1000 base so they still depth-sort
+  // correctly against each other across tiles.
   for (const f of ROOM_FURNITURE) {
-    items.push({ depth: tileDepth(f.col, f.row) + 2, draw: () => drawFurniture(f) });
+    const meta = FURNITURE_BY_ID[f.id];
+    const isFloor = meta?.layer === 'floor';
+    const base = isFloor ? 500 : 1000;
+    const offset = isFloor ? 0 : 2;
+    items.push({ depth: base + tileDepth(f.col, f.row) + offset, draw: () => drawFurniture(f) });
   }
   for (const a of avatars) {
     const liveCol = a.state === 'walking' && a.target
@@ -555,7 +565,7 @@ function frame(dtMs) {
     const liveRow = a.state === 'walking' && a.target
       ? a.target.row * easeInOut(a.walkT) + a.row * (1 - easeInOut(a.walkT))
       : a.row;
-    items.push({ depth: tileDepth(Math.round(liveCol), Math.round(liveRow)) + 5, draw: () => drawAvatar(a) });
+    items.push({ depth: 1000 + tileDepth(Math.round(liveCol), Math.round(liveRow)) + 5, draw: () => drawAvatar(a) });
   }
   items.sort((a, b) => a.depth - b.depth);
   for (const it of items) it.draw();
