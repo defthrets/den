@@ -8,12 +8,12 @@
 //   `col, row` = anchor tile (left/north corner of the footprint).
 //   `rotated`  = horizontal flip → the other "facing the camera" view.
 
-const FURNITURE_FRAME_W = 288;  // 96 × 3 (nearest-neighbor upscale)
-const FURNITURE_FRAME_H = 288;
+const FURNITURE_FRAME_W = 96;
+const FURNITURE_FRAME_H = 96;
 // Sprites are normalised so the visual base of every piece lands at
 // y=92 in the 96-px frame (see tools/normalize-furniture.py).
 const FURNITURE_BASE_Y    = 92 / 96;
-const FURNITURE_BASE_SCALE = 0.35; // 1.05 / 3 — keeps visual size after 3x source upscale
+const FURNITURE_BASE_SCALE = 1.05; // overall — small enough that 1×1 items fit on one tile
 
 const FURNITURE_CATEGORIES = [
   { id: 'seating',    label: 'Seating'    },

@@ -13,12 +13,12 @@ import '../../../core/iso_math.dart';
 /// the frame — same anchor trick we use for avatars so the base lands
 /// on the tile center instead of the frame bottom.
 class FurnitureComponent extends PositionComponent {
-  static const double frameW = 288;  // 96 × 3 (nearest-neighbor upscale)
-  static const double frameH = 288;
+  static const double frameW = 96;
+  static const double frameH = 96;
   // Sprites are normalised so the visual base lands at y=92 in the 96-px frame.
   static const double _baseAnchorY = 92 / 96;
   // Overall furniture scale — smaller now so 1×1 items fit a tile.
-  static const double _baseScale = 0.35;  // 1.05 / 3 — keeps visual size after 3x source upscale
+  static const double _baseScale = 1.05;
 
   final String itemId;
   final int col;
