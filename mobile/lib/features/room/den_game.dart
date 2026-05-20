@@ -49,20 +49,9 @@ class DenGame extends FlameGame with TapCallbacks {
     world.add(WallTile(side: WallSide.backLeft));
 
     // ── Demo furniture placements (will come from /users/:id/room later) ──
-    const demoLayout = [
-      FurniturePlacement(id: 'bookshelf',   col: 0, row: 0),
-      FurniturePlacement(id: 'sofa_red',    col: 1, row: 1),
-      FurniturePlacement(id: 'table_round', col: 2, row: 2),
-      FurniturePlacement(id: 'lamp_floor',  col: 3, row: 0),
-      FurniturePlacement(id: 'tv_crt',      col: 5, row: 0),
-      FurniturePlacement(id: 'fridge',      col: 8, row: 0),
-      FurniturePlacement(id: 'bed_blue',    col: 8, row: 2),
-      FurniturePlacement(id: 'rug_persian', col: 4, row: 4),
-      FurniturePlacement(id: 'chair_wood',  col: 6, row: 3),
-      FurniturePlacement(id: 'plant_tall',  col: 9, row: 7),
-      FurniturePlacement(id: 'plant_tall',  col: 0, row: 7),
-      FurniturePlacement(id: 'fish_tank',   col: 2, row: 6),
-    ];
+    // Empty room — items are placed via the editor (web preview today,
+    // Flutter editor UI in a follow-up).
+    const demoLayout = <FurniturePlacement>[];
     for (final p in demoLayout) {
       world.add(FurnitureComponent(itemId: p.id, col: p.col, row: p.row));
     }
