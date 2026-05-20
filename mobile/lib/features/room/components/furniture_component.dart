@@ -15,7 +15,8 @@ import '../../../core/iso_math.dart';
 class FurnitureComponent extends PositionComponent {
   static const double frameW = 96;
   static const double frameH = 96;
-  static const double _baseAnchorY = 0.85;
+  // Sprites are normalised so the visual base lands at y=92 in the 96-px frame.
+  static const double _baseAnchorY = 92 / 96;
   // Overall furniture scale — smaller now so 1×1 items fit a tile.
   static const double _baseScale = 1.05;
 
