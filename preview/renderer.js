@@ -219,7 +219,14 @@ function resize() {
   ctx.imageSmoothingEnabled = false;
   viewportW = rect.width;
   viewportH = rect.height;
-  zoom = (viewportW * 1.0) / ROOM_W;
+  // Snap zoom to a clean fraction so source pixels downsample with a
+  // consistent, repeating pattern instead of fractional aliasing. 2/3
+  // keeps each pixel run uniform; 1/2 etc are picked when the viewport
+  // is too narrow for 2/3. Upscaling only happens at integer multiples.
+  const raw = viewportW / ROOM_W;
+  const choices = [3, 2, 1, 2/3, 1/2, 1/3, 1/4];
+  zoom = choices.reduce((best, z) =>
+    Math.abs(z - raw) < Math.abs(best - raw) ? z : best, choices[choices.length - 1]);
 }
 window.addEventListener('resize', resize);
 resize();
