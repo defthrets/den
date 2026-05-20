@@ -13,7 +13,9 @@ const FURNITURE_FRAME_H = 96;
 // Sprites are normalised so the visual base of every piece lands at
 // y=92 in the 96-px frame (see tools/normalize-furniture.py).
 const FURNITURE_BASE_Y    = 92 / 96;
-const FURNITURE_BASE_SCALE = 1.05; // overall — small enough that 1×1 items fit on one tile
+// Set to 1.0 so 96 source × zoom 2/3 = exactly 64 display: clean 3:2
+// nearest-neighbour pattern instead of fractional aliasing.
+const FURNITURE_BASE_SCALE = 1.0;
 
 const FURNITURE_CATEGORIES = [
   { id: 'seating',    label: 'Seating'    },

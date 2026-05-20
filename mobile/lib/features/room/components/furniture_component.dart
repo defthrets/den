@@ -18,7 +18,8 @@ class FurnitureComponent extends PositionComponent {
   // Sprites are normalised so the visual base lands at y=92 in the 96-px frame.
   static const double _baseAnchorY = 92 / 96;
   // Overall furniture scale — smaller now so 1×1 items fit a tile.
-  static const double _baseScale = 1.05;
+  // 1.0 so 96 source × 2/3 zoom = 64 display: clean 3:2 downsample.
+  static const double _baseScale = 1.0;
 
   final String itemId;
   final int col;

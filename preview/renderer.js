@@ -9,10 +9,12 @@ const TILE_H_HALF = TILE_H / 2;
 const ROOM_COLS = 10;
 const ROOM_ROWS = 8;
 
-const AVATAR_SCALE_BOOST = 1.5;   // slightly smaller overall
-// Squish on Y, slight stretch on X → "shorter and fatter" Habbo look
-const AVATAR_X_FACTOR = 1.05;
-const AVATAR_Y_FACTOR = 0.88;
+// Boost 1.5 × zoom 2/3 = 1.0 → every source pixel = exactly 1 screen pixel.
+// X/Y factors are 1.0 so we don't reintroduce fractional scaling. The
+// "shorter/fatter" squish would break pixel alignment, so it's off.
+const AVATAR_SCALE_BOOST = 1.5;
+const AVATAR_X_FACTOR = 1.0;
+const AVATAR_Y_FACTOR = 1.0;
 
 // Sprite sheet layout (PixelLab create-character + template walk):
 //   6 cols (walk-cycle frames) × 4 rows (facing direction). 92×92 each.

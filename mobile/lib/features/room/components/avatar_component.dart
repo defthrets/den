@@ -36,8 +36,10 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
   static const int walkFrames = 6;
   static const double _avatarScale = 1.5;
   // "shorter and fatter" Habbo proportions — squish vertical, slight horizontal stretch
-  static const double _xFactor = 1.05;
-  static const double _yFactor = 0.88;
+  // Pixel-perfect: 92 source × 1.5 boost × 2/3 zoom = 92 display. Squish
+  // factors would break the 1:1 mapping, so they stay at 1.0.
+  static const double _xFactor = 1.0;
+  static const double _yFactor = 1.0;
   static const double walkDurationPerTile = 0.85;
   static const double walkFrameDuration = 0.14;
 
