@@ -67,6 +67,7 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
   int _walkFrame = 0;
   double _walkFrameTimer = 0;
   int _direction = _dirS;
+  final List<List<int>> _pathQueue = [];
 
   AvatarComponent({
     required this.col,
@@ -103,6 +104,14 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
   }
 
   void walkTo(int targetCol, int targetRow) {
+    if (_state == AvatarState.walking) {
+      _pathQueue.add([targetCol, targetRow]);
+      return;
+    }
+    _startStep(targetCol, targetRow);
+  }
+
+  void _startStep(int targetCol, int targetRow) {
     _targetCol = targetCol;
     _targetRow = targetRow;
     _state = AvatarState.walking;
@@ -150,6 +159,13 @@ class AvatarComponent extends PositionComponent with TapCallbacks {
         _walkFrame = 0;
         _walkFrameTimer = 0;
         _syncPosition();
+        // Consume the next queued step (drop redundant ones where we already are).
+        while (_pathQueue.isNotEmpty) {
+          final next = _pathQueue.removeAt(0);
+          if (next[0] == col && next[1] == row) continue;
+          _startStep(next[0], next[1]);
+          break;
+        }
       }
     }
   }

@@ -189,6 +189,7 @@ function makeAvatar(userId, col, row, isMe, cfg) {
     direction: DIR_S,
     walkFrame: 0,
     walkFrameTimer: 0,
+    pathQueue: [],
   };
   a.sprite = new Image();
   a.sprite.src = `sprites/${cfg.preset}.png?v=${SPRITE_VERSION}`;
@@ -533,8 +534,19 @@ function frame(dtMs) {
 
       if (a.walkT >= 1) {
         a.col = a.target.col; a.row = a.target.row;
-        a.target = null; a.state = 'idle'; a.walkT = 0;
-        a.walkFrame = 0; a.walkFrameTimer = 0;
+        a.target = null; a.walkT = 0;
+        // Pop the next queued step (skip any that became blocked since being queued).
+        while (a.pathQueue && a.pathQueue.length) {
+          const next = a.pathQueue.shift();
+          if (next.col === a.col && next.row === a.row) continue;
+          if (typeof isTileBlocked === 'function' && isTileBlocked(next.col, next.row)) continue;
+          a.target = next;
+          break;
+        }
+        if (!a.target) {
+          a.state = 'idle';
+          a.walkFrame = 0; a.walkFrameTimer = 0;
+        }
       }
     }
   }
@@ -666,9 +678,15 @@ canvas.addEventListener('pointerup', (e) => {
   }
   // Walk the avatar — unless the destination is blocked by furniture.
   if (typeof isTileBlocked === 'function' && isTileBlocked(tile.col, tile.row)) return;
-  me.target = tile;
-  me.state = 'walking';
-  me.walkT = 0;
+  // Queue the click. If idle, start moving immediately; otherwise let the
+  // current step finish before consuming the next.
+  if (me.state === 'walking' && me.target) {
+    me.pathQueue.push(tile);
+  } else {
+    me.target = tile;
+    me.state = 'walking';
+    me.walkT = 0;
+  }
 });
 
 canvas.addEventListener('pointercancel', () => {
