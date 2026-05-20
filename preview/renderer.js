@@ -25,7 +25,7 @@ const BUBBLE_LIFETIME = 4.5;
 const BUBBLE_RISE_SPEED = 26;
 
 // Bump when regenerating sprites so the browser fetches the new PNGs.
-const SPRITE_VERSION = 10;
+const SPRITE_VERSION = 11;
 
 const PAL = {
   skyTop:        '#1A2744',
@@ -573,6 +573,11 @@ function loop(now) {
 requestAnimationFrame(loop);
 
 // ── Input: tap to walk ──────────────────────────────────────────────────
+// Tile-click handling. Long-press is detected by comparing pointerdown
+// and pointerup timestamps; in edit mode this lets us distinguish
+// "rotate" (short tap) from "delete" (long press).
+let _downAt = 0;
+let _downTile = null;
 canvas.addEventListener('pointerdown', (e) => {
   const rect = canvas.getBoundingClientRect();
   const px = e.clientX - rect.left;
@@ -581,12 +586,27 @@ canvas.addEventListener('pointerdown', (e) => {
   const t = screenToTile(wx, wy);
   const tc = Math.round(t.col);
   const tr = Math.round(t.row);
-  if (tc >= 0 && tc < ROOM_COLS && tr >= 0 && tr < ROOM_ROWS) {
-    me.target = { col: tc, row: tr };
-    me.state = 'walking';
-    me.walkT = 0;
-  }
+  if (tc < 0 || tc >= ROOM_COLS || tr < 0 || tr >= ROOM_ROWS) return;
+  _downAt = Date.now();
+  _downTile = { col: tc, row: tr };
 });
+canvas.addEventListener('pointerup', (e) => {
+  if (!_downTile) return;
+  const dur = Date.now() - _downAt;
+  const tile = _downTile;
+  _downTile = null;
+
+  // Editor intercepts first
+  if (window.editor && window.editor.state.active) {
+    window.editor.onTileClick(tile.col, tile.row, dur);
+    return;
+  }
+  // Otherwise: walk the avatar
+  me.target = tile;
+  me.state = 'walking';
+  me.walkT = 0;
+});
+canvas.addEventListener('pointercancel', () => { _downTile = null; });
 
 // ── Chat input interactions ────────────────────────────────────────────
 const input    = document.getElementById('msgInput');

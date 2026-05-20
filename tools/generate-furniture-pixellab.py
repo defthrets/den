@@ -59,6 +59,8 @@ CATALOG = [
     ("computer",    "beige retro desktop computer with CRT monitor and keyboard, Habbo Hotel furniture style", 911),
     ("fish_tank",   "rectangular glass aquarium with two orange fish, green plants and blue water, Habbo Hotel furniture style", 912),
     ("painting",    "framed wall painting of a green landscape with gold frame, Habbo Hotel furniture style", 913),
+    ("doorway",     "isometric wooden entry doorway with door frame, open door, single object, Habbo Hotel furniture style", 914),
+    ("window",      "isometric square window with white frame and blue sky visible through it, single wall-mounted object, Habbo Hotel furniture style", 915),
 ]
 
 def api_post(path: str, body: dict) -> dict:

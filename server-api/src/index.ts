@@ -138,6 +138,8 @@ async function main() {
       { id: 'computer',    name: 'Computer' },
       { id: 'fish_tank',   name: 'Fish tank' },
       { id: 'painting',    name: 'Painting' },
+      { id: 'doorway',     name: 'Doorway' },
+      { id: 'window',      name: 'Window' },
     ],
   }));
 

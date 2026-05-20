@@ -23,6 +23,8 @@ class FurnitureCatalog {
     FurnitureItem(id: 'computer',    name: 'Computer'),
     FurnitureItem(id: 'fish_tank',   name: 'Fish tank'),
     FurnitureItem(id: 'painting',    name: 'Painting'),
+    FurnitureItem(id: 'doorway',     name: 'Doorway'),
+    FurnitureItem(id: 'window',      name: 'Window'),
   ];
 }
 
