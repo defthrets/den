@@ -322,6 +322,21 @@
     font-size: 11px; color: var(--text-muted);
     flex: 1;
   }
+  .editor-mode {
+    padding: 6px 12px;
+    margin-right: 8px;
+    background: var(--surface-alt);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    font-weight: 600; font-size: 12px;
+    cursor: pointer;
+  }
+  .editor-mode.active {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+  }
   .editor-done {
     padding: 6px 14px;
     background: var(--accent);
@@ -330,6 +345,8 @@
     font-weight: 700; font-size: 12px;
     cursor: pointer;
   }
+  /* Slight raise + glow on the picked-up item so it's obvious it's being moved */
+  body.editor-picked-up canvas#room { cursor: grab; }
   .editor-palette {
     padding: 0 0 16px;
   }
@@ -416,8 +433,9 @@
     <!-- Room editor palette (hidden until edit mode) -->
     <div class="editor-panel" id="editorPanel">
       <div class="editor-header">
-        <div class="editor-title">Place furniture</div>
-        <div class="editor-hint">tap tile to place · tap item to rotate · long-press to delete</div>
+        <div class="editor-title" id="editorTitle">Place furniture</div>
+        <div class="editor-hint" id="editorHint">tap tile to place · tap item to rotate · long-press to delete</div>
+        <button class="editor-mode" id="editorMode">Move</button>
         <button class="editor-done" id="editorDone">Done</button>
       </div>
       <div class="editor-palette" id="editorPalette"></div>
@@ -482,10 +500,10 @@
 <div class="meta">Tap a floor tile to walk. Tap the bottom bar to open chat.</div>
 
 <!-- v query busts the browser cache when these files change -->
-<script src="wardrobe.js?v=15"></script>
-<script src="furniture.js?v=16"></script>
-<script src="renderer.js?v=15"></script>
-<script src="customiser.js?v=15"></script>
-<script src="editor.js?v=15"></script>
+<script src="wardrobe.js?v=17"></script>
+<script src="furniture.js?v=17"></script>
+<script src="renderer.js?v=17"></script>
+<script src="customiser.js?v=17"></script>
+<script src="editor.js?v=17"></script>
 </body>
 </html>

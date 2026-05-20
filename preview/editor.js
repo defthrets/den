@@ -1,25 +1,33 @@
-// Room editor — overlays the room with a furniture palette, lets you
-// place, rotate, and delete items.
+// Room editor — palette + place / move / rotate / delete.
 //
-// While editor.state.active is true, the renderer's tile-click handler
-// routes through editor.onTileClick instead of walking the avatar.
+// Modes:
+//   place  — tap an empty tile to drop the selected palette item.
+//            tap a placed item to rotate.
+//            long-press a placed item to delete.
+//   move   — tap a placed item to pick it up; tap any empty tile to
+//            drop it there. Tap-cancel returns it to where it was.
 (() => {
+  const den       = window.den;
   const editBtn   = document.getElementById('editBtn');
   const panel     = document.getElementById('editorPanel');
   const doneBtn   = document.getElementById('editorDone');
+  const modeBtn   = document.getElementById('editorMode');
+  const titleEl   = document.getElementById('editorTitle');
+  const hintEl    = document.getElementById('editorHint');
   const palette   = document.getElementById('editorPalette');
 
   const state = {
     active: false,
+    mode: 'place',          // 'place' | 'move'
     activeCategory: FURNITURE_CATEGORIES[0].id,
-    selectedId: null,
+    selectedId: null,       // palette item (place mode)
+    pickedUpIndex: -1,      // index in ROOM_FURNITURE while moving
   };
 
-  // ── Render category tabs + palette ─────────────────────────────────
+  // ── Palette / chips ────────────────────────────────────────────────
   function renderPalette() {
     palette.innerHTML = '';
 
-    // Category tabs
     const tabs = document.createElement('div');
     tabs.className = 'palette-tabs';
     for (const cat of FURNITURE_CATEGORIES) {
@@ -31,15 +39,11 @@
     }
     palette.appendChild(tabs);
 
-    // Items for the active category
     const row = document.createElement('div');
     row.className = 'palette-row';
     palette.appendChild(row);
-
     const items = FURNITURE_CATALOG.filter(i => i.category === state.activeCategory);
-    for (const item of items) {
-      row.appendChild(makeChip(item));
-    }
+    for (const item of items) row.appendChild(makeChip(item));
   }
 
   function makeChip(item) {
@@ -68,45 +72,107 @@
     chip.appendChild(c);
     chip.appendChild(lbl);
     chip.onclick = () => {
+      if (state.mode !== 'place') setMode('place');
       state.selectedId = (state.selectedId === item.id) ? null : item.id;
       renderPalette();
     };
     return chip;
   }
 
+  // ── Mode handling ──────────────────────────────────────────────────
+  function setMode(next) {
+    state.mode = next;
+    state.pickedUpIndex = -1;
+    state.selectedId = next === 'place' ? state.selectedId : null;
+    document.body.classList.remove('editor-picked-up');
+    syncHeader();
+    modeBtn.classList.toggle('active', next === 'move');
+  }
+
+  function syncHeader() {
+    if (state.mode === 'move') {
+      if (state.pickedUpIndex >= 0) {
+        titleEl.textContent = 'Move furniture';
+        hintEl.textContent = 'tap an empty tile to drop · tap selected item to cancel';
+      } else {
+        titleEl.textContent = 'Move furniture';
+        hintEl.textContent = 'tap a placed item to pick it up';
+      }
+    } else {
+      titleEl.textContent = 'Place furniture';
+      hintEl.textContent = 'tap tile to place · tap item to rotate · long-press to delete';
+    }
+  }
+
   function setActive(on) {
     state.active = on;
     panel.classList.toggle('open', on);
     document.body.classList.toggle('editing', on);
-    if (on) renderPalette();
+    if (on) { setMode('place'); renderPalette(); }
   }
 
   editBtn.addEventListener('click', () => setActive(true));
   doneBtn.addEventListener('click', () => setActive(false));
+  modeBtn.addEventListener('click', () => {
+    setMode(state.mode === 'place' ? 'move' : 'place');
+    renderPalette();
+  });
 
-  // Called by renderer.js when a tile is tapped in edit mode.
+  // ── Tile click logic ───────────────────────────────────────────────
   function onTileClick(col, row, durationMs) {
     if (!state.active) return false;
 
     const existing = furnitureAtTile(col, row);
 
+    // ─── MOVE mode ───────────────────────────────────────────────
+    if (state.mode === 'move') {
+      // Holding nothing yet: tap a placed item to pick it up
+      if (state.pickedUpIndex < 0) {
+        if (!existing) return true;
+        state.pickedUpIndex = existing.index;
+        document.body.classList.add('editor-picked-up');
+        syncHeader();
+        return true;
+      }
+      // Tapping the picked-up item: cancel
+      if (existing && existing.index === state.pickedUpIndex) {
+        state.pickedUpIndex = -1;
+        document.body.classList.remove('editor-picked-up');
+        syncHeader();
+        return true;
+      }
+      // Otherwise: drop at (col, row) if the footprint fits
+      const item = ROOM_FURNITURE[state.pickedUpIndex];
+      const meta = FURNITURE_BY_ID[item.id];
+      const [fw, fh] = meta?.footprint || [1, 1];
+      if (canPlaceFootprint(col, row, fw, fh, state.pickedUpIndex)) {
+        item.col = col;
+        item.row = row;
+        state.pickedUpIndex = -1;
+        document.body.classList.remove('editor-picked-up');
+        syncHeader();
+      }
+      return true;
+    }
+
+    // ─── PLACE mode ──────────────────────────────────────────────
     // Long-press deletes
     if (existing && durationMs >= 500) {
       ROOM_FURNITURE.splice(existing.index, 1);
       return true;
     }
-    // Tap on existing furniture: rotate (flip)
+    // Tap on existing furniture: rotate
     if (existing) {
       existing.item.rotated = !existing.item.rotated;
       return true;
     }
     // Empty tile + palette selection: place
     if (state.selectedId) {
-      ROOM_FURNITURE.push({
-        id: state.selectedId,
-        col, row,
-        rotated: false,
-      });
+      const meta = FURNITURE_BY_ID[state.selectedId];
+      const [fw, fh] = meta?.footprint || [1, 1];
+      if (canPlaceFootprint(col, row, fw, fh)) {
+        ROOM_FURNITURE.push({ id: state.selectedId, col, row, rotated: false });
+      }
       return true;
     }
     return true;

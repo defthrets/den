@@ -72,7 +72,7 @@ function footprintCenter(item) {
   return tileToScreen(cx, cy);
 }
 
-function drawFurniture(item) {
+function drawFurniture(item, opts = {}) {
   const sprite = loadFurnitureSprite(item.id);
   if (!sprite.complete || sprite.naturalWidth === 0) return;
 
@@ -86,10 +86,26 @@ function drawFurniture(item) {
   const h = FURNITURE_FRAME_H * screenScale;
   const padBelowBase = (1 - FURNITURE_BASE_Y) * h;
 
+  // Lift the picked-up item a few pixels so it visually "floats"
+  // while you're choosing where to drop it.
+  const liftPx = opts.pickedUp ? -10 : 0;
+
   const dx = Math.round(sx - w / 2);
-  const dy = Math.round(sy - h + padBelowBase);
+  const dy = Math.round(sy - h + padBelowBase + liftPx);
 
   ctx.imageSmoothingEnabled = false;
+
+  // Shadow at the drop tile when picked up, so it's clear where it'll land
+  if (opts.pickedUp) {
+    ctx.save();
+    ctx.globalAlpha = 0.35;
+    ctx.fillStyle = '#000';
+    ctx.beginPath();
+    ctx.ellipse(sx, sy - 2, w * 0.32, h * 0.06, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
   if (item.rotated) {
     ctx.save();
     ctx.translate(sx, 0);
@@ -99,6 +115,15 @@ function drawFurniture(item) {
     ctx.restore();
   } else {
     ctx.drawImage(sprite, dx, dy, Math.round(w), Math.round(h));
+  }
+
+  // Outline glow on picked-up item
+  if (opts.pickedUp) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(245, 166, 35, 0.9)'; // accent
+    ctx.lineWidth = 2;
+    ctx.strokeRect(dx + 4, dy + 4, w - 8, h - 8);
+    ctx.restore();
   }
 }
 
@@ -114,4 +139,33 @@ function furnitureAtTile(col, row) {
     }
   }
   return null;
+}
+
+// True if (col, row) is blocked for avatar movement. Floor-layer items
+// like rugs are walkable; everything else is solid.
+function isTileBlocked(col, row) {
+  const hit = furnitureAtTile(col, row);
+  if (!hit) return false;
+  const meta = FURNITURE_BY_ID[hit.item.id];
+  return meta?.layer !== 'floor';
+}
+
+// Can a footprint of size [w, h] be placed at (col, row) without
+// overlapping any non-floor-layer item already in the room?
+function canPlaceFootprint(col, row, w, h, ignoreIndex = -1) {
+  if (col < 0 || row < 0 || col + w > ROOM_COLS || row + h > ROOM_ROWS) return false;
+  for (let dr = 0; dr < h; dr++) {
+    for (let dc = 0; dc < w; dc++) {
+      for (let i = 0; i < ROOM_FURNITURE.length; i++) {
+        if (i === ignoreIndex) continue;
+        const f = ROOM_FURNITURE[i];
+        const m = FURNITURE_BY_ID[f.id];
+        if (m?.layer === 'floor') continue;
+        const [fw, fh] = m?.footprint || [1, 1];
+        const c = col + dc, r = row + dr;
+        if (c >= f.col && c < f.col + fw && r >= f.row && r < f.row + fh) return false;
+      }
+    }
+  }
+  return true;
 }

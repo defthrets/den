@@ -554,12 +554,17 @@ function frame(dtMs) {
   //   avatars:           1000 + tile_depth + 5         (1005–1165)
   // Furniture + avatars share the 1000 base so they still depth-sort
   // correctly against each other across tiles.
-  for (const f of ROOM_FURNITURE) {
+  const pickedUpIdx = window.editor?.state?.pickedUpIndex ?? -1;
+  for (let i = 0; i < ROOM_FURNITURE.length; i++) {
+    const f = ROOM_FURNITURE[i];
     const meta = FURNITURE_BY_ID[f.id];
     const isFloor = meta?.layer === 'floor';
     const base = isFloor ? 500 : 1000;
     const offset = isFloor ? 0 : 2;
-    items.push({ depth: base + tileDepth(f.col, f.row) + offset, draw: () => drawFurniture(f) });
+    const pickedUp = i === pickedUpIdx;
+    // Picked-up items render on top of everything else so the glow is visible
+    const depth = pickedUp ? 5000 : base + tileDepth(f.col, f.row) + offset;
+    items.push({ depth, draw: () => drawFurniture(f, { pickedUp }) });
   }
   for (const a of avatars) {
     const liveCol = a.state === 'walking' && a.target
@@ -614,7 +619,8 @@ canvas.addEventListener('pointerup', (e) => {
     window.editor.onTileClick(tile.col, tile.row, dur);
     return;
   }
-  // Otherwise: walk the avatar
+  // Walk the avatar — unless the destination is blocked by furniture.
+  if (typeof isTileBlocked === 'function' && isTileBlocked(tile.col, tile.row)) return;
   me.target = tile;
   me.state = 'walking';
   me.walkT = 0;
