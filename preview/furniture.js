@@ -34,7 +34,7 @@ const FURNITURE_CATALOG = [
   { id: 'chair_wood',  name: 'Wooden chair', category: 'seating',     scale: 1.0, footprint: [1, 1] },
   { id: 'sofa_red',    name: 'Red sofa',     category: 'seating',     scale: 1.5, footprint: [2, 1] },
   // ── Surfaces
-  { id: 'bed_blue',    name: 'Blue bed',     category: 'surfaces',    scale: 1.5, footprint: [2, 1] },
+  { id: 'bed_blue',    name: 'Blue bed',     category: 'surfaces',    scale: 1.0, footprint: [2, 1] },
   { id: 'table_round', name: 'Round table',  category: 'surfaces',    scale: 1.0, footprint: [1, 1] },
   { id: 'desk_wood',   name: 'Wooden desk',  category: 'surfaces',    scale: 1.5, footprint: [2, 1] },
   // ── Electronics
