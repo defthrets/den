@@ -76,6 +76,10 @@ function parseHex(hex) {
   return { r: (n >> 16) & 0xff, g: (n >> 8) & 0xff, b: n & 0xff };
 }
 function rgbStr(r, g, b) { return `rgb(${r|0},${g|0},${b|0})`; }
+function hexToRgba(hex, a) {
+  const c = parseHex(hex);
+  return `rgba(${c.r},${c.g},${c.b},${a})`;
+}
 function darken(hex, amt) {
   const c = parseHex(hex);
   return rgbStr(c.r * (1 - amt), c.g * (1 - amt), c.b * (1 - amt));
@@ -336,7 +340,16 @@ function drawWallPanel(bLw, bRw, wh, fill, divisions, style) {
     drawWallPattern(ctx, style, pBL, pBR, wh, zoom);
   }
 
-  ctx.strokeStyle = 'rgba(154,136,112,0.35)';
+  // Mortar lines: derive a faint shade from the wall's outline colour so
+  // they read as a subtle texture on every wall style instead of beige
+  // showing through on dark/coloured walls. Patterned walls (Victorian)
+  // skip them entirely so the damask reads cleanly.
+  if (style && style.pattern) {
+    return;
+  }
+  ctx.strokeStyle = (style && style.outline)
+    ? hexToRgba(style.outline, 0.32)
+    : 'rgba(154,136,112,0.35)';
   ctx.lineWidth = 0.5;
   for (let dy = 12 * zoom; dy < wh * zoom; dy += 14 * zoom) {
     ctx.beginPath();
