@@ -40,8 +40,20 @@ PREVIEW_OUT = REPO / "preview" / "furniture"
 MOBILE_OUT.mkdir(parents=True, exist_ok=True)
 PREVIEW_OUT.mkdir(parents=True, exist_ok=True)
 
-# Image size for furniture. 96 matches our existing renderer constants.
-SIZE = 96
+# Default image_size sent to PixelLab. Final PNG is always padded to
+# 96x96 so the renderer's FURNITURE_FRAME_W stays consistent.
+DEFAULT_SIZE = 96
+FRAME = 96
+
+# Per-piece overrides. Smaller image_size = smaller pixel-art at 1:1 render.
+# These are the pieces the user asked to be smaller — 5/2026.
+PIECE_SIZE = {
+    "chair_wood": 48,
+    "bed_blue":   64,
+    "fridge":     48,
+    "computer":   48,
+    "tv_crt":     64,
+}
 
 # Each entry: (id, description, seed)
 CATALOG = [
@@ -94,34 +106,31 @@ def decode_rgba(img_data: dict) -> Image.Image:
     return Image.frombytes("RGBA", (w, h), raw)
 
 def generate_item(item_id: str, description: str, seed: int) -> Image.Image:
-    # Generate all 8 rotation directions, then keep only the south-east
-    # frame — that's the iso-aligned 3/4 view Habbo uses.
-    # Horizontal flip at render time gives the south-west variant.
-    print(f"  POST /objects (8-dir)...", end="", flush=True)
-    r = api_post("/objects", {
+    # New API (v2 as of 2026-05): POST /create-8-direction-object → poll
+    # background job → GET /objects/{id} → fetch the south-east rotation URL
+    # (iso 3/4 view; horizontal flip at render gives south-west).
+    # NB: the API no longer accepts `seed`, `directions`, or `no_background`.
+    size = PIECE_SIZE.get(item_id, DEFAULT_SIZE)
+    print(f"  POST /create-8-direction-object (size={size})...", end="", flush=True)
+    r = api_post("/create-8-direction-object", {
         "description": description,
-        "directions": 8,
-        "image_size": {"width": SIZE, "height": SIZE},
+        "size": size,
         "view": "low top-down",
-        "n_frames": 1,
-        "no_background": True,
-        "seed": seed,
     })
-    # Some responses come back synchronously with the image already attached.
-    try:
-        return _extract_image(r)
-    except RuntimeError:
-        pass
-    if "background_job_id" in r:
-        job_id = r["background_job_id"]
-    elif "background_job_ids" in r and r["background_job_ids"]:
-        job_id = r["background_job_ids"][0]
-    else:
-        raise RuntimeError(f"Unexpected response: {json.dumps(r)[:400]}")
-
-    data = wait_for_job(job_id)
-    resp = data.get("last_response", {})
-    return _extract_image(resp)
+    job_id    = r["background_job_id"]
+    object_id = r["object_id"]
+    wait_for_job(job_id)
+    obj = api_get(f"/objects/{object_id}")
+    rotations = obj.get("rotation_urls") or {}
+    url = rotations.get("south-east")
+    if not url:
+        # Fall back to any rotation URL we can find.
+        for k in ("south", "south-west", "east", "west"):
+            url = rotations.get(k)
+            if url: break
+    if not url:
+        raise RuntimeError(f"No image URLs in object {object_id}: {json.dumps(obj)[:400]}")
+    return _fetch_png(url)
 
 def _fetch_png(url: str) -> Image.Image:
     from io import BytesIO
@@ -169,6 +178,17 @@ def main():
         print(f"[{i:>2}/{len(items)}] {item_id:<24} ", end="", flush=True)
         try:
             img = generate_item(item_id, desc, seed)
+            # Pad/crop into a 96x96 frame (bottom-aligned, horizontally centred)
+            # so renderer constants stay constant regardless of requested size.
+            if img.size != (FRAME, FRAME):
+                canvas = Image.new("RGBA", (FRAME, FRAME), (0, 0, 0, 0))
+                bbox = img.getbbox() or (0, 0, img.size[0], img.size[1])
+                content = img.crop(bbox)
+                cw, ch = content.size
+                x = (FRAME - cw) // 2
+                y = FRAME - ch - 4  # 4 px floor padding, normalize will refine
+                canvas.paste(content, (x, y))
+                img = canvas
             img.save(out_m); img.save(out_p)
             print(f" [ok] {time.time()-start:.1f}s")
         except Exception as e:
