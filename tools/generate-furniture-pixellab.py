@@ -52,7 +52,7 @@ PIECE_SIZE = {
     "bed_blue":   80,
     "computer":   48,
     "tv_crt":     64,
-    # fridge: back to default 96
+    "fridge":     80,
 }
 
 # Each entry: (id, description, seed)
