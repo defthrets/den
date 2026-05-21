@@ -26,29 +26,31 @@ const FURNITURE_CATEGORIES = [
 ];
 
 // scale ≈ visual width factor relative to a 1-tile baseline (1.0).
-// Multi-tile items get larger scale so they span their footprint.
+// Snapped to clean fractions of 2/3 so 96 source × scale × zoom is always
+// an integer at zoom 2/3 (1.0 → 64 display, 1.5 → 96 display). No
+// fractional aliasing. Multi-tile pieces use 1.5 so they read as ~2 tiles.
 const FURNITURE_CATALOG = [
   // ── Seating
-  { id: 'chair_wood',  name: 'Wooden chair', category: 'seating',     scale: 1.0,  footprint: [1, 1] },
-  { id: 'sofa_red',    name: 'Red sofa',     category: 'seating',     scale: 1.7,  footprint: [2, 1] },
+  { id: 'chair_wood',  name: 'Wooden chair', category: 'seating',     scale: 1.0, footprint: [1, 1] },
+  { id: 'sofa_red',    name: 'Red sofa',     category: 'seating',     scale: 1.5, footprint: [2, 1] },
   // ── Surfaces
-  { id: 'bed_blue',    name: 'Blue bed',     category: 'surfaces',    scale: 1.3,  footprint: [2, 1] },
-  { id: 'table_round', name: 'Round table',  category: 'surfaces',    scale: 1.0,  footprint: [1, 1] },
-  { id: 'desk_wood',   name: 'Wooden desk',  category: 'surfaces',    scale: 1.4,  footprint: [2, 1] },
+  { id: 'bed_blue',    name: 'Blue bed',     category: 'surfaces',    scale: 1.5, footprint: [2, 1] },
+  { id: 'table_round', name: 'Round table',  category: 'surfaces',    scale: 1.0, footprint: [1, 1] },
+  { id: 'desk_wood',   name: 'Wooden desk',  category: 'surfaces',    scale: 1.5, footprint: [2, 1] },
   // ── Electronics
-  { id: 'tv_crt',      name: 'CRT TV',       category: 'electronics', scale: 0.9,  footprint: [1, 1] },
-  { id: 'computer',    name: 'Computer',     category: 'electronics', scale: 0.85, footprint: [1, 1] },
-  { id: 'fridge',      name: 'Fridge',       category: 'electronics', scale: 1.0,  footprint: [1, 1] },
-  { id: 'fish_tank',   name: 'Fish tank',    category: 'electronics', scale: 1.0,  footprint: [1, 1] },
+  { id: 'tv_crt',      name: 'CRT TV',       category: 'electronics', scale: 1.0, footprint: [1, 1] },
+  { id: 'computer',    name: 'Computer',     category: 'electronics', scale: 1.0, footprint: [1, 1] },
+  { id: 'fridge',      name: 'Fridge',       category: 'electronics', scale: 1.0, footprint: [1, 1] },
+  { id: 'fish_tank',   name: 'Fish tank',    category: 'electronics', scale: 1.0, footprint: [1, 1] },
   // ── Decor
-  { id: 'plant_tall',  name: 'Tall plant',   category: 'decor',       scale: 0.95, footprint: [1, 1] },
-  { id: 'lamp_floor',  name: 'Floor lamp',   category: 'decor',       scale: 0.85, footprint: [1, 1] },
-  { id: 'rug_persian', name: 'Persian rug',  category: 'decor',       scale: 1.7,  footprint: [2, 2], layer: 'floor' },
-  { id: 'painting',    name: 'Painting',     category: 'decor',       scale: 0.75, footprint: [1, 1] },
-  { id: 'bookshelf',   name: 'Bookshelf',    category: 'decor',       scale: 1.1,  footprint: [1, 1] },
+  { id: 'plant_tall',  name: 'Tall plant',   category: 'decor',       scale: 1.0, footprint: [1, 1] },
+  { id: 'lamp_floor',  name: 'Floor lamp',   category: 'decor',       scale: 1.0, footprint: [1, 1] },
+  { id: 'rug_persian', name: 'Persian rug',  category: 'decor',       scale: 1.5, footprint: [2, 2], layer: 'floor' },
+  { id: 'painting',    name: 'Painting',     category: 'decor',       scale: 1.0, footprint: [1, 1] },
+  { id: 'bookshelf',   name: 'Bookshelf',    category: 'decor',       scale: 1.0, footprint: [1, 1] },
   // ── Structures
-  { id: 'doorway',     name: 'Doorway',      category: 'structures',  scale: 1.05, footprint: [1, 1] },
-  { id: 'window',      name: 'Window',       category: 'structures',  scale: 0.85, footprint: [1, 1] },
+  { id: 'doorway',     name: 'Doorway',      category: 'structures',  scale: 1.0, footprint: [1, 1] },
+  { id: 'window',      name: 'Window',       category: 'structures',  scale: 1.0, footprint: [1, 1] },
 ];
 
 const FURNITURE_BY_ID = Object.fromEntries(FURNITURE_CATALOG.map(i => [i.id, i]));

@@ -14,7 +14,7 @@ class WallTile extends PositionComponent {
   final int cols;
   final int rows;
 
-  static const double _wallH = 128.0;
+  static const double _wallH = 192.0;
 
   WallTile({required this.side, this.cols = roomCols, this.rows = roomRows})
       : super(
