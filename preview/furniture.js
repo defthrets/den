@@ -78,20 +78,6 @@ function footprintCenter(item) {
   return tileToScreen(cx, cy);
 }
 
-// When a piece's footprint touches the back wall (row 0) or the back-left
-// wall (col 0), nudge it toward the wall in iso world space so its visual
-// back lines up with the wall instead of hovering half-a-tile in front of it.
-// Floor decals (rugs) don't snap.
-function wallNudge(item) {
-  const meta = FURNITURE_BY_ID[item.id] || { footprint: [1, 1] };
-  if (meta.layer === 'floor') return { dx: 0, dy: 0 };
-  let dx = 0, dy = 0;
-  if (item.row === 0) { dx += TILE_W_HALF;  dy -= TILE_H_HALF; }
-  if (item.col === 0) { dx -= TILE_W_HALF;  dy -= TILE_H_HALF; }
-  // Half-strength — full snap looks like the piece is climbing the wall.
-  return { dx: dx * 0.5, dy: dy * 0.5 };
-}
-
 function drawFurniture(item, opts = {}) {
   const sprite = loadFurnitureSprite(item.id);
   if (!sprite.complete || sprite.naturalWidth === 0) return;
@@ -100,8 +86,7 @@ function drawFurniture(item, opts = {}) {
   const itemScale = FURNITURE_BASE_SCALE * (meta.scale ?? 1.0);
 
   const c = footprintCenter(item);
-  const nudge = opts.pickedUp ? { dx: 0, dy: 0 } : wallNudge(item);
-  const { sx, sy } = worldToScreen(c.x + nudge.dx, c.y + nudge.dy);
+  const { sx, sy } = worldToScreen(c.x, c.y);
   const screenScale = zoom * itemScale;
   const w = FURNITURE_FRAME_W * screenScale;
   const h = FURNITURE_FRAME_H * screenScale;

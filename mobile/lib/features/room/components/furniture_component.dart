@@ -55,20 +55,9 @@ class FurnitureComponent extends PositionComponent {
     // For fractional centres (even footprint dims) shift in iso coords
     final dxCol = (footprint[0] - 1) / 2.0 - ((footprint[0] - 1) ~/ 2);
     final dxRow = (footprint[1] - 1) / 2.0 - ((footprint[1] - 1) ~/ 2);
-    // When the footprint touches the back wall (row 0) or back-left wall
-    // (col 0), nudge halfway toward that wall so the piece looks pressed
-    // against it instead of hovering half-a-tile in front. Floor decals
-    // (rugs) keep their natural position.
-    double wallDx = 0, wallDy = 0;
-    if (!floorLayer) {
-      if (row == 0) { wallDx += 32; wallDy -= 16; }
-      if (col == 0) { wallDx -= 32; wallDy -= 16; }
-      wallDx *= 0.5;
-      wallDy *= 0.5;
-    }
     position = Vector2(
-      s.dx + (dxCol - dxRow) * 32 + wallDx,
-      s.dy + (dxCol + dxRow) * 16 + wallDy,
+      s.dx + (dxCol - dxRow) * 32,
+      s.dy + (dxCol + dxRow) * 16,
     );
   }
 
