@@ -49,10 +49,10 @@ FRAME = 96
 # These are the pieces the user asked to be smaller — 5/2026.
 PIECE_SIZE = {
     "chair_wood": 48,
-    "bed_blue":   64,
-    "fridge":     48,
+    "bed_blue":   80,
     "computer":   48,
     "tv_crt":     64,
+    # fridge: back to default 96
 }
 
 # Each entry: (id, description, seed)
