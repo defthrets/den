@@ -30,7 +30,7 @@ const BUBBLE_LIFETIME = 4.5;
 const BUBBLE_RISE_SPEED = 26;
 
 // Bump when regenerating sprites so the browser fetches the new PNGs.
-const SPRITE_VERSION = 15;
+const SPRITE_VERSION = 17;
 
 const PAL = {
   skyTop:        '#1A2744',

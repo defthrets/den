@@ -42,9 +42,38 @@ def bottom_opaque_row(img):
     w, h = img.size
     for y in range(h - 1, -1, -1):
         for x in range(w):
-            if pixels[x, y] > 8:  # threshold to skip near-transparent
+            if pixels[x, y] > 8:
                 return y
     return -1
+
+def horizontal_bounds(img):
+    """Return (left, right) of the opaque-pixel bounding box."""
+    a = img.split()[3]
+    pixels = a.load()
+    w, h = img.size
+    left, right = w, -1
+    for y in range(h):
+        for x in range(w):
+            if pixels[x, y] > 8:
+                if x < left:  left = x
+                if x > right: right = x
+    return (left, right) if right >= 0 else (-1, -1)
+
+def base_horizontal_bounds(img, base_y, depth=6):
+    """Horizontal extent of the piece's BASE — the last `depth` opaque rows
+    above the bottom row. This is what sits on the tile; align this to the
+    frame centre, not the whole bbox (the back of a chair leans into iso
+    space and pulls the bbox left/right of the actual floor contact)."""
+    a = img.split()[3]
+    pixels = a.load()
+    w, _ = img.size
+    left, right = w, -1
+    for y in range(max(0, base_y - depth), base_y + 1):
+        for x in range(w):
+            if pixels[x, y] > 8:
+                if x < left:  left = x
+                if x > right: right = x
+    return (left, right) if right >= 0 else (-1, -1)
 
 def normalize(path: Path) -> str:
     img = Image.open(path).convert("RGBA")
@@ -52,13 +81,17 @@ def normalize(path: Path) -> str:
     base = bottom_opaque_row(img)
     if base < 0:
         return "skip (no opaque pixels)"
-    delta = TARGET_BASE_Y - base  # positive = shift down, negative = shift up
-    if delta == 0:
-        return f"already at base={base}"
+    left, right = base_horizontal_bounds(img, base)
+    base_cx = (left + right) // 2
+    target_cx = w // 2
+    dx = target_cx - base_cx
+    dy = TARGET_BASE_Y - base
+    if dx == 0 and dy == 0:
+        return f"already centered (base={base}, base_cx={base_cx})"
     canvas = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    canvas.paste(img, (0, delta))
+    canvas.paste(img, (dx, dy))
     canvas.save(path)
-    return f"base {base} -> {TARGET_BASE_Y} (shifted {delta:+d}px)"
+    return f"base {base}->{TARGET_BASE_Y} (dy={dy:+d}), base_cx {base_cx}->{target_cx} (dx={dx:+d})"
 
 def main():
     args = sys.argv[1:]
