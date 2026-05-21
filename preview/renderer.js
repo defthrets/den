@@ -254,6 +254,12 @@ function drawFloorTile(col, row) {
   const dh = TILE_H * zoom;
   const fh = FACE_H * zoom;
   const alt = (col + row) % 2 === 0;
+  const fs = (typeof currentFloorStyle === 'function') ? currentFloorStyle() : null;
+  const topA = fs ? fs.topA : PAL.floorTopA;
+  const topB = fs ? fs.topB : PAL.floorTopB;
+  const leftFace = fs ? fs.leftFace : PAL.floorLeftFace;
+  const rightFace = fs ? fs.rightFace : PAL.floorRightFace;
+  const outline = fs ? fs.outline : PAL.floorOutline;
 
   ctx.save();
   ctx.translate(sx - w / 2, sy);
@@ -264,11 +270,15 @@ function drawFloorTile(col, row) {
   ctx.lineTo(w / 2, dh);
   ctx.lineTo(0,     dh / 2);
   ctx.closePath();
-  ctx.fillStyle = alt ? PAL.floorTopB : PAL.floorTopA;
+  ctx.fillStyle = alt ? topB : topA;
   ctx.fill();
-  ctx.strokeStyle = PAL.floorOutline;
+  ctx.strokeStyle = outline;
   ctx.lineWidth = 0.75;
   ctx.stroke();
+
+  if (fs && fs.pattern && typeof drawFloorPattern === 'function') {
+    drawFloorPattern(ctx, fs, w, dh, col, row);
+  }
 
   ctx.beginPath();
   ctx.moveTo(0,     dh / 2);
@@ -276,7 +286,7 @@ function drawFloorTile(col, row) {
   ctx.lineTo(w / 2, dh + fh);
   ctx.lineTo(0,     dh / 2 + fh);
   ctx.closePath();
-  ctx.fillStyle = PAL.floorLeftFace;
+  ctx.fillStyle = leftFace;
   ctx.fill();
   ctx.stroke();
 
@@ -286,7 +296,7 @@ function drawFloorTile(col, row) {
   ctx.lineTo(w,     dh / 2 + fh);
   ctx.lineTo(w / 2, dh + fh);
   ctx.closePath();
-  ctx.fillStyle = PAL.floorRightFace;
+  ctx.fillStyle = rightFace;
   ctx.fill();
   ctx.stroke();
   ctx.restore();
@@ -295,14 +305,16 @@ function drawFloorTile(col, row) {
 function drawBackRightWall() {
   const bL = tileToScreen(0, 0);          bL.y -= TILE_H_HALF;
   const bR = tileToScreen(ROOM_COLS, 0);  bR.y -= TILE_H_HALF;
-  drawWallPanel(bL, bR, WALL_H, PAL.wallLight, ROOM_COLS);
+  const s = (typeof currentWallStyle === 'function') ? currentWallStyle() : null;
+  drawWallPanel(bL, bR, WALL_H, s ? s.light : PAL.wallLight, ROOM_COLS, s);
 }
 function drawBackLeftWall() {
   const bR = tileToScreen(0, 0);          bR.y -= TILE_H_HALF;
   const bL = tileToScreen(0, ROOM_ROWS);  bL.y -= TILE_H_HALF;
-  drawWallPanel(bL, bR, WALL_H, PAL.wallDark, ROOM_ROWS);
+  const s = (typeof currentWallStyle === 'function') ? currentWallStyle() : null;
+  drawWallPanel(bL, bR, WALL_H, s ? s.dark : PAL.wallDark, ROOM_ROWS, s);
 }
-function drawWallPanel(bLw, bRw, wh, fill, divisions) {
+function drawWallPanel(bLw, bRw, wh, fill, divisions, style) {
   const pBL = worldToScreen(bLw.x, bLw.y);
   const pBR = worldToScreen(bRw.x, bRw.y);
   const pTL = worldToScreen(bLw.x, bLw.y - wh);
@@ -316,9 +328,13 @@ function drawWallPanel(bLw, bRw, wh, fill, divisions) {
   ctx.closePath();
   ctx.fillStyle = fill;
   ctx.fill();
-  ctx.strokeStyle = PAL.wallOutline;
+  ctx.strokeStyle = (style && style.outline) || PAL.wallOutline;
   ctx.lineWidth = 0.75;
   ctx.stroke();
+
+  if (style && style.pattern && typeof drawWallPattern === 'function') {
+    drawWallPattern(ctx, style, pBL, pBR, wh, zoom);
+  }
 
   ctx.strokeStyle = 'rgba(154,136,112,0.35)';
   ctx.lineWidth = 0.5;
