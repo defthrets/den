@@ -24,8 +24,8 @@ const FRAME_H = 92;
 const WALK_FRAMES = 6;
 const DIR_S = 0, DIR_E = 1, DIR_N = 2, DIR_W = 3;
 
-const WALK_DURATION = 0.85;
-const WALK_FRAME_DURATION = 0.14;
+const WALK_DURATION = 0.35;        // seconds per tile-step (was 0.85)
+const WALK_FRAME_DURATION = 0.09;  // walk-cycle frame duration (was 0.14)
 const BUBBLE_LIFETIME = 4.5;
 const BUBBLE_RISE_SPEED = 26;
 
@@ -202,18 +202,25 @@ function makeAvatar(userId, col, row, isMe, cfg) {
   return a;
 }
 
-// BFS path from (sc, sr) to (tc, tr) on the room grid, avoiding any tile
-// that isTileBlocked() reports as solid. 4-directional — iso diagonals
-// happen via consecutive col/row steps. Returns an array of [col, row]
-// step tiles (excluding the start), or null if no path exists.
+// 8-directional BFS path from (sc, sr) to (tc, tr), avoiding any tile
+// that isTileBlocked() reports as solid. Diagonals are allowed only if
+// at least one of the two adjacent cardinal tiles is also walkable —
+// prevents the avatar from squeezing diagonally between two corners of
+// solid furniture. Returns step tiles after the start, or null.
 function findPath(sc, sr, tc, tr) {
   if (sc === tc && sr === tr) return [];
-  if (typeof isTileBlocked === 'function' && isTileBlocked(tc, tr)) return null;
+  const blocked = (c, r) =>
+    typeof isTileBlocked === 'function' && isTileBlocked(c, r);
+  if (blocked(tc, tr)) return null;
   const key = (c, r) => r * ROOM_COLS + c;
   const visited = new Set([key(sc, sr)]);
   const prev = new Map();
   const queue = [[sc, sr]];
-  const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  // Cardinals first so equal-cost paths prefer non-diagonal moves.
+  const dirs = [
+    [ 1,  0], [-1,  0], [ 0,  1], [ 0, -1],
+    [ 1,  1], [-1,  1], [ 1, -1], [-1, -1],
+  ];
   while (queue.length) {
     const [c, r] = queue.shift();
     for (const [dc, dr] of dirs) {
@@ -221,13 +228,15 @@ function findPath(sc, sr, tc, tr) {
       if (nc < 0 || nc >= ROOM_COLS || nr < 0 || nr >= ROOM_ROWS) continue;
       const k = key(nc, nr);
       if (visited.has(k)) continue;
-      // Skip blocked tiles — except the destination itself was already
-      // accepted above.
-      if (typeof isTileBlocked === 'function' && isTileBlocked(nc, nr)) continue;
+      if (blocked(nc, nr)) continue;
+      // Diagonal corner-cut protection: require at least one orthogonal
+      // neighbour walkable so we don't slip between two diagonal blockers.
+      if (dc !== 0 && dr !== 0) {
+        if (blocked(c + dc, r) && blocked(c, r + dr)) continue;
+      }
       visited.add(k);
       prev.set(k, [c, r]);
       if (nc === tc && nr === tr) {
-        // Reconstruct path by walking the prev map back to the start.
         const out = [[nc, nr]];
         let curK = k;
         while (prev.has(curK)) {
