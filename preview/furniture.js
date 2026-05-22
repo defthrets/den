@@ -23,6 +23,7 @@ const FURNITURE_CATEGORIES = [
   { id: 'electronics',label: 'Electronics'},
   { id: 'decor',      label: 'Decor'      },
   { id: 'structures', label: 'Structures' },
+  { id: 'archive',    label: 'Archive'    },  // every historical version
 ];
 
 // Every piece renders at 1:1 source-to-screen — scale 1.5 cancels the
@@ -54,6 +55,11 @@ const FURNITURE_CATALOG = [
   { id: 'window',      name: 'Window',       category: 'structures',  scale: 1.5, footprint: [1, 1] },
 ];
 
+// Splice in the auto-generated archive entries if present (furniture-archive.js
+// is loaded before this file in index.html).
+if (typeof ARCHIVE_CATALOG !== 'undefined') {
+  FURNITURE_CATALOG.push(...ARCHIVE_CATALOG);
+}
 const FURNITURE_BY_ID = Object.fromEntries(FURNITURE_CATALOG.map(i => [i.id, i]));
 
 // Empty room — place items via the editor.
