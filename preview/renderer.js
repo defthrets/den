@@ -202,6 +202,48 @@ function makeAvatar(userId, col, row, isMe, cfg) {
   return a;
 }
 
+// BFS path from (sc, sr) to (tc, tr) on the room grid, avoiding any tile
+// that isTileBlocked() reports as solid. 4-directional — iso diagonals
+// happen via consecutive col/row steps. Returns an array of [col, row]
+// step tiles (excluding the start), or null if no path exists.
+function findPath(sc, sr, tc, tr) {
+  if (sc === tc && sr === tr) return [];
+  if (typeof isTileBlocked === 'function' && isTileBlocked(tc, tr)) return null;
+  const key = (c, r) => r * ROOM_COLS + c;
+  const visited = new Set([key(sc, sr)]);
+  const prev = new Map();
+  const queue = [[sc, sr]];
+  const dirs = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  while (queue.length) {
+    const [c, r] = queue.shift();
+    for (const [dc, dr] of dirs) {
+      const nc = c + dc, nr = r + dr;
+      if (nc < 0 || nc >= ROOM_COLS || nr < 0 || nr >= ROOM_ROWS) continue;
+      const k = key(nc, nr);
+      if (visited.has(k)) continue;
+      // Skip blocked tiles — except the destination itself was already
+      // accepted above.
+      if (typeof isTileBlocked === 'function' && isTileBlocked(nc, nr)) continue;
+      visited.add(k);
+      prev.set(k, [c, r]);
+      if (nc === tc && nr === tr) {
+        // Reconstruct path by walking the prev map back to the start.
+        const out = [[nc, nr]];
+        let curK = k;
+        while (prev.has(curK)) {
+          const [pc, pr] = prev.get(curK);
+          if (pc === sc && pr === sr) break;
+          out.unshift([pc, pr]);
+          curK = key(pc, pr);
+        }
+        return out;
+      }
+      queue.push([nc, nr]);
+    }
+  }
+  return null;
+}
+
 function directionFromMovement(dcol, drow) {
   // Work in screen space so "south" = visually down, not grid-row+.
   // Iso: screen_x ∝ (dcol - drow), screen_y ∝ (dcol + drow), with tile 64×32
@@ -714,18 +756,27 @@ canvas.addEventListener('pointerup', (e) => {
     window.editor.onTileClick(tile.col, tile.row, dur);
     return;
   }
-  // Walk the avatar — unless the destination is blocked by furniture.
+  // Walk the avatar — route around furniture via BFS pathfinding so
+  // solid pieces actually block movement instead of being walked through.
   if (typeof isTileBlocked === 'function' && isTileBlocked(tile.col, tile.row)) return;
-  // Queue the click. If idle, start moving immediately; otherwise let the
-  // current step finish before consuming the next. Cap the queue at 3
-  // pending destinations — beyond that, drop the click.
+  // Compute path from where the avatar will END UP after the current
+  // step (= me.target if walking, else its current tile).
+  const fromCol = (me.state === 'walking' && me.target) ? me.target.col : me.col;
+  const fromRow = (me.state === 'walking' && me.target) ? me.target.row : me.row;
+  const path = findPath(fromCol, fromRow, tile.col, tile.row);
+  if (!path || path.length === 0) return;
+  // Replace any previously-queued steps with the new path. Current step
+  // (if any) finishes first; subsequent steps come from the new path.
+  me.pathQueue.length = 0;
   if (me.state === 'walking' && me.target) {
-    if (me.pathQueue.length >= 3) return;
-    me.pathQueue.push(tile);
+    for (const [c, r] of path) me.pathQueue.push({ col: c, row: r });
   } else {
-    me.target = tile;
+    me.target = { col: path[0][0], row: path[0][1] };
     me.state = 'walking';
     me.walkT = 0;
+    for (let i = 1; i < path.length; i++) {
+      me.pathQueue.push({ col: path[i][0], row: path[i][1] });
+    }
   }
 });
 
