@@ -425,12 +425,10 @@ function avatarWorldPos(a) {
   if (a.state === 'walking' && a.target) {
     const from = tileToScreen(a.col, a.row);
     const to   = tileToScreen(a.target.col, a.target.row);
-    // Linear interpolation — when walking a multi-tile path the avatar
-    // crosses tile boundaries at full speed, so motion stays smooth and
-    // doesn't stutter at each step. Easing only kicks in on the final
-    // step (no more queued tiles) so the stop still feels natural.
-    const lastStep = !a.pathQueue || a.pathQueue.length === 0;
-    const t = lastStep ? easeInOut(a.walkT) : a.walkT;
+    // Pure linear interpolation — constant velocity per tile so multi-tile
+    // walks read as one continuous motion. easeInOut would peak at 2x speed
+    // in the middle of a step, which looked like the last step "speeds up".
+    const t = a.walkT;
     return { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
   }
   const p = tileToScreen(a.col, a.row);
@@ -684,12 +682,8 @@ function frame(dtMs) {
     items.push({ depth, draw: () => drawFurniture(f, { pickedUp }) });
   }
   for (const a of avatars) {
-    // Linear t for mid-path tiles, ease on the final step — matches
-    // avatarWorldPos so depth sorting tracks the actual rendered position.
-    const lastStep = a.state === 'walking' && a.target && (!a.pathQueue || a.pathQueue.length === 0);
-    const t = a.state === 'walking' && a.target
-      ? (lastStep ? easeInOut(a.walkT) : a.walkT)
-      : 0;
+    // Linear t everywhere so depth-sort lerp matches avatarWorldPos exactly.
+    const t = (a.state === 'walking' && a.target) ? a.walkT : 0;
     const liveCol = a.state === 'walking' && a.target
       ? a.target.col * t + a.col * (1 - t)
       : a.col;
