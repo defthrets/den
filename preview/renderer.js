@@ -425,7 +425,12 @@ function avatarWorldPos(a) {
   if (a.state === 'walking' && a.target) {
     const from = tileToScreen(a.col, a.row);
     const to   = tileToScreen(a.target.col, a.target.row);
-    const t = easeInOut(a.walkT);
+    // Linear interpolation — when walking a multi-tile path the avatar
+    // crosses tile boundaries at full speed, so motion stays smooth and
+    // doesn't stutter at each step. Easing only kicks in on the final
+    // step (no more queued tiles) so the stop still feels natural.
+    const lastStep = !a.pathQueue || a.pathQueue.length === 0;
+    const t = lastStep ? easeInOut(a.walkT) : a.walkT;
     return { x: from.x + (to.x - from.x) * t, y: from.y + (to.y - from.y) * t };
   }
   const p = tileToScreen(a.col, a.row);
@@ -679,11 +684,17 @@ function frame(dtMs) {
     items.push({ depth, draw: () => drawFurniture(f, { pickedUp }) });
   }
   for (const a of avatars) {
+    // Linear t for mid-path tiles, ease on the final step — matches
+    // avatarWorldPos so depth sorting tracks the actual rendered position.
+    const lastStep = a.state === 'walking' && a.target && (!a.pathQueue || a.pathQueue.length === 0);
+    const t = a.state === 'walking' && a.target
+      ? (lastStep ? easeInOut(a.walkT) : a.walkT)
+      : 0;
     const liveCol = a.state === 'walking' && a.target
-      ? a.target.col * easeInOut(a.walkT) + a.col * (1 - easeInOut(a.walkT))
+      ? a.target.col * t + a.col * (1 - t)
       : a.col;
     const liveRow = a.state === 'walking' && a.target
-      ? a.target.row * easeInOut(a.walkT) + a.row * (1 - easeInOut(a.walkT))
+      ? a.target.row * t + a.row * (1 - t)
       : a.row;
     items.push({ depth: 1000 + tileDepth(Math.round(liveCol), Math.round(liveRow)) + 5, draw: () => drawAvatar(a) });
   }
