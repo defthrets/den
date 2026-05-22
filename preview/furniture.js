@@ -35,10 +35,10 @@ const FURNITURE_CATALOG = [
   // ── Seating
   { id: 'chair_wood',     name: 'Wooden chair', category: 'seating',  scale: 1.5, footprint: [1, 1] },
   { id: 'sofa_red',       name: 'Red sofa',     category: 'seating',  scale: 1.5, footprint: [2, 1] },
-  { id: 'couch_dirty_v1', name: 'Dirty couch 1',category: 'seating',  scale: 1.5, footprint: [2, 1] },
-  { id: 'couch_dirty_v2', name: 'Dirty couch 2',category: 'seating',  scale: 1.5, footprint: [2, 1] },
-  { id: 'couch_dirty_v3', name: 'Dirty couch 3',category: 'seating',  scale: 1.5, footprint: [2, 1] },
-  { id: 'couch_dirty_v4', name: 'Dirty couch 4',category: 'seating',  scale: 1.5, footprint: [2, 1] },
+  { id: 'couch_dirty_v1', name: 'Dirty couch 1',category: 'seating',  scale: 1.5, footprint: [2, 1], offsetForward: 16 },
+  { id: 'couch_dirty_v2', name: 'Dirty couch 2',category: 'seating',  scale: 1.5, footprint: [2, 1], offsetForward: 16 },
+  { id: 'couch_dirty_v3', name: 'Dirty couch 3',category: 'seating',  scale: 1.5, footprint: [2, 1], offsetForward: 16 },
+  { id: 'couch_dirty_v4', name: 'Dirty couch 4',category: 'seating',  scale: 1.5, footprint: [2, 1], offsetForward: 16 },
   // ── Surfaces
   { id: 'bed_blue',    name: 'Blue bed',     category: 'surfaces',    scale: 1.5, footprint: [2, 1] },
   { id: 'table_round', name: 'Round table',  category: 'surfaces',    scale: 1.5, footprint: [1, 1] },
@@ -105,9 +105,15 @@ function drawFurniture(item, opts = {}) {
   // Lift the picked-up item a few pixels so it visually "floats"
   // while you're choosing where to drop it.
   const liftPx = opts.pickedUp ? -10 : 0;
+  // Per-piece nudge in SOURCE pixels — `offsetForward` shifts the piece
+  // toward the camera along the iso south-east diagonal (positive screen x
+  // AND y). Optional `offsetX`/`offsetY` override either axis directly.
+  const fwd = (meta.offsetForward ?? 0);
+  const offX = (meta.offsetX ?? fwd) * screenScale;
+  const offY = (meta.offsetY ?? fwd * 0.5) * screenScale;  // iso 2:1 ratio
 
-  const dx = Math.round(sx - w / 2);
-  const dy = Math.round(sy - h + padBelowBase + liftPx);
+  const dx = Math.round(sx - w / 2 + offX);
+  const dy = Math.round(sy - h + padBelowBase + liftPx + offY);
 
   ctx.imageSmoothingEnabled = false;
 
