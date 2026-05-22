@@ -38,7 +38,6 @@ const FURNITURE_CATALOG = [
   // ── Surfaces
   { id: 'bed_blue',    name: 'Blue bed',     category: 'surfaces',    scale: 1.5, footprint: [2, 1] },
   { id: 'table_round', name: 'Round table',  category: 'surfaces',    scale: 1.5, footprint: [1, 1] },
-  { id: 'desk_wood',   name: 'Wooden desk',  category: 'surfaces',    scale: 1.5, footprint: [2, 1] },
   // ── Electronics
   { id: 'tv_crt',      name: 'CRT TV',       category: 'electronics', scale: 1.5, footprint: [1, 1] },
   { id: 'computer',    name: 'Computer',     category: 'electronics', scale: 1.5, footprint: [1, 1] },
