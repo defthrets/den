@@ -62,6 +62,42 @@ PRESETS = [
         "seed": 801,
         "detail": "high",
     },
+    {
+        "id": "punk_red_boy",
+        "description": "Habbo Hotel boy avatar, spiky bright red hair, black leather jacket over white shirt, ripped dark jeans, oval head with dot eyes, small frown, dark outline, flat shading, classic Habbo pixel art style",
+        "seed": 802,
+        "detail": "high",
+    },
+    {
+        "id": "blonde_yellow_girl",
+        "description": "Habbo Hotel girl avatar, long blonde hair tied with a bow, sunny yellow t-shirt, blue denim shorts, oval head with dot eyes and tiny smile, dark outline, flat shading, classic Habbo pixel art style",
+        "seed": 803,
+        "detail": "high",
+    },
+    {
+        "id": "preppy_boy",
+        "description": "Habbo Hotel boy avatar, neat blonde hair, green polo shirt with collar, khaki trousers, oval head with dot eyes and tiny smile, dark outline, flat shading, classic Habbo pixel art style",
+        "seed": 804,
+        "detail": "high",
+    },
+    {
+        "id": "goth_girl",
+        "description": "Habbo Hotel girl avatar, long black hair with side bangs, dark purple band shirt, black skirt, oval head with dot eyes and neutral mouth, dark outline, flat shading, classic Habbo pixel art style",
+        "seed": 805,
+        "detail": "high",
+    },
+    {
+        "id": "athlete_boy",
+        "description": "Habbo Hotel boy avatar, short black hair, red basketball jersey, dark grey shorts, brown skin, oval head with dot eyes and tiny smile, dark outline, flat shading, classic Habbo pixel art style",
+        "seed": 806,
+        "detail": "high",
+    },
+    {
+        "id": "nerd_kid",
+        "description": "Habbo Hotel boy avatar, neat brown hair, round glasses, light blue button-up shirt with tie, dark trousers, oval head with dot eyes behind glasses and tiny smile, dark outline, flat shading, classic Habbo pixel art style",
+        "seed": 807,
+        "detail": "high",
+    },
 ]
 
 def api_post(path: str, body: dict) -> dict:
