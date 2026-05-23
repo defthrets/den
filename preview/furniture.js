@@ -141,10 +141,12 @@ function drawFurniture(item, opts = {}) {
     ctx.drawImage(sprite, dx, dy, Math.round(w), Math.round(h));
   }
 
-  // Outline glow on picked-up item
-  if (opts.pickedUp) {
+  // Outline glow on picked-up OR selected piece
+  if (opts.pickedUp || opts.selected) {
     ctx.save();
-    ctx.strokeStyle = 'rgba(245, 166, 35, 0.9)'; // accent
+    ctx.strokeStyle = opts.pickedUp
+      ? 'rgba(245, 166, 35, 0.9)'   // amber while dragging
+      : 'rgba(120, 200, 255, 0.9)'; // soft blue when selected (resting)
     ctx.lineWidth = 2;
     ctx.strokeRect(dx + 4, dy + 4, w - 8, h - 8);
     ctx.restore();

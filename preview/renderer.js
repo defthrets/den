@@ -753,11 +753,13 @@ function frame(dtMs) {
   // Furniture + avatars share the 1000 base so they still depth-sort
   // correctly against each other across tiles.
   const pickedUpIdx = window.editor?.state?.pickedUpIndex ?? -1;
+  const selectedIdx = window.editor?.state?.selectedPlacedIndex ?? -1;
   const dragCol = window.editor?.state?.dragCol;
   const dragRow = window.editor?.state?.dragRow;
   for (let i = 0; i < ROOM_FURNITURE.length; i++) {
     let f = ROOM_FURNITURE[i];
     const pickedUp = i === pickedUpIdx;
+    const selected = i === selectedIdx;
     // While dragging, render the picked-up item at the drag tile so it
     // visually follows the cursor/finger.
     if (pickedUp && dragCol != null && dragRow != null) {
@@ -768,7 +770,7 @@ function frame(dtMs) {
     const base = isFloor ? 500 : 1000;
     const offset = isFloor ? 0 : 2;
     const depth = pickedUp ? 5000 : base + tileDepth(f.col, f.row) + offset;
-    items.push({ depth, draw: () => drawFurniture(f, { pickedUp }) });
+    items.push({ depth, draw: () => drawFurniture(f, { pickedUp, selected }) });
   }
   for (const a of avatars) {
     // Linear t everywhere so depth-sort lerp matches avatarWorldPos exactly.

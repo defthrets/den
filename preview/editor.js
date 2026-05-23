@@ -20,9 +20,11 @@
     active: false,
     mode: 'place',          // 'place' | 'move'
     activeCategory: FURNITURE_CATEGORIES[0].id,
-    selectedId: null,       // palette item (place mode)
+    selectedId: null,       // palette item to place
+    placeRotated: false,    // rotate preview before placing
+    selectedPlacedIndex: -1, // index in ROOM_FURNITURE of currently-selected placed piece
     pickedUpIndex: -1,      // index in ROOM_FURNITURE while moving
-    dragCol: null,          // current drag-hover tile (drives render)
+    dragCol: null,
     dragRow: null,
   };
 
@@ -202,6 +204,10 @@
     panel.classList.toggle('open', on);
     document.body.classList.toggle('editing', on);
     if (on) { setMode('place'); renderPalette(); }
+    else {
+      state.selectedPlacedIndex = -1;
+      hideActionBar();
+    }
   }
 
   editBtn.addEventListener('click', () => setActive(true));
@@ -249,26 +255,90 @@
     }
 
     // ─── PLACE mode ──────────────────────────────────────────────
-    // Long-press deletes
-    if (existing && durationMs >= 500) {
-      ROOM_FURNITURE.splice(existing.index, 1);
-      return true;
-    }
-    // Tap on existing furniture: rotate
+    // Tap an existing piece: SELECT it (highlight + floating toolbar).
+    // Tap the already-selected piece again: deselect.
     if (existing) {
-      existing.item.rotated = !existing.item.rotated;
+      state.selectedPlacedIndex =
+        state.selectedPlacedIndex === existing.index ? -1 : existing.index;
+      syncHeader();
+      positionActionToolbar();
       return true;
     }
-    // Empty tile + palette selection: place
+    // Tap empty tile while a placed piece is selected: deselect.
+    if (state.selectedPlacedIndex >= 0) {
+      state.selectedPlacedIndex = -1;
+      syncHeader();
+      positionActionToolbar();
+      return true;
+    }
+    // Tap empty tile with a palette item selected: place it.
     if (state.selectedId) {
       const meta = FURNITURE_BY_ID[state.selectedId];
       const [fw, fh] = meta?.footprint || [1, 1];
       if (canPlaceFootprint(col, row, fw, fh)) {
-        ROOM_FURNITURE.push({ id: state.selectedId, col, row, rotated: false });
+        ROOM_FURNITURE.push({
+          id: state.selectedId, col, row, rotated: state.placeRotated,
+        });
       }
       return true;
     }
     return true;
+  }
+
+  // ── Floating action toolbar (Rotate / Delete) for selected piece ──
+  let actionBar = null;
+  function ensureActionBar() {
+    if (actionBar) return actionBar;
+    actionBar = document.createElement('div');
+    actionBar.id = 'furnitureActions';
+    actionBar.style.cssText =
+      'position:absolute;display:none;z-index:7;gap:6px;flex-direction:row;' +
+      'pointer-events:auto;transform:translate(-50%,-100%);';
+    const mkBtn = (label, cls, onClick) => {
+      const b = document.createElement('button');
+      b.className = cls;
+      b.textContent = label;
+      b.onclick = (e) => { e.stopPropagation(); onClick(); };
+      return b;
+    };
+    actionBar.appendChild(mkBtn('Rotate', 'editor-mode', () => {
+      if (state.selectedPlacedIndex < 0) return;
+      const it = ROOM_FURNITURE[state.selectedPlacedIndex];
+      it.rotated = !it.rotated;
+    }));
+    actionBar.appendChild(mkBtn('Delete', 'editor-mode', () => {
+      if (state.selectedPlacedIndex < 0) return;
+      ROOM_FURNITURE.splice(state.selectedPlacedIndex, 1);
+      state.selectedPlacedIndex = -1;
+      hideActionBar();
+      syncHeader();
+    }));
+    document.querySelector('.screen').appendChild(actionBar);
+    return actionBar;
+  }
+  function hideActionBar() {
+    if (actionBar) actionBar.style.display = 'none';
+  }
+  function positionActionToolbar() {
+    const bar = ensureActionBar();
+    bar.style.display = 'flex';
+    if (state.selectedPlacedIndex < 0) { bar.style.display = 'none'; return; }
+    // Position over the piece's centre (footprint midpoint).
+    const item = ROOM_FURNITURE[state.selectedPlacedIndex];
+    const meta = FURNITURE_BY_ID[item.id] || { footprint: [1,1] };
+    const [fw, fh] = meta.footprint || [1, 1];
+    const cx = item.col + (fw - 1) / 2;
+    const cy = item.row + (fh - 1) / 2;
+    if (typeof tileToScreen === 'function' && typeof worldToScreen === 'function') {
+      const c = tileToScreen(cx, cy);
+      const screen = worldToScreen(c.x, c.y);
+      const canvasRect = document.getElementById('room').getBoundingClientRect();
+      const phoneRect  = document.querySelector('.screen').getBoundingClientRect();
+      const left = (canvasRect.left - phoneRect.left) + screen.sx;
+      const top  = (canvasRect.top  - phoneRect.top)  + screen.sy - 60;
+      bar.style.left = left + 'px';
+      bar.style.top  = top + 'px';
+    }
   }
 
   // ── Drag handlers (move mode) ──────────────────────────────────────
@@ -303,6 +373,7 @@
     state.dragRow = null;
     document.body.classList.remove('editor-picked-up');
     syncHeader();
+    positionActionToolbar();
     return true;
   }
   function cancelDrag() {
