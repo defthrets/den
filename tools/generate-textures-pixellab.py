@@ -70,6 +70,21 @@ UI_ICONS = [
     ("ui_close",    "tiny pixel art X close icon, bold white pixels, transparent background, minimal flat"),
 ]
 
+# Decorated UI panels / button skins — full PixelLab art used as CSS
+# background-image (with image-rendering: pixelated). Sizes chosen to
+# match the slots they fill in the HTML.
+UI_PANELS = [
+    # 64x32 chunky button skins. Bevel + highlight + shadow baked in so
+    # we can drop our CSS rectangle borders.
+    ("ui_btn_amber", 64, 32, "pixel art chunky game button face, warm amber orange with dark outline, glossy bevelled top highlight, soft inner shadow, classic Habbo Hotel UI style"),
+    ("ui_btn_dark",  64, 32, "pixel art chunky game button face, dark slate grey with white outline, subtle bevelled top highlight, classic Habbo Hotel UI style"),
+    # 96x96 ornate header / panel frame artwork. Centre stays usable for
+    # text on top; corners + edges have brass / wood pixel detail.
+    ("ui_panel_top", 192, 48, "pixel art game UI horizontal banner, dark wood with brass corner studs, ornate scroll edges, empty middle for label, classic Habbo Hotel dialog style"),
+    # 128x40 input-field skin — wood frame for the chat input bar
+    ("ui_input_bg",  128, 40, "pixel art game UI long input slot, dark inset trough with thin gold border, classic JRPG message field, empty middle"),
+]
+
 # Wall patterns — seamless square that we tile across the wall quad.
 # 64x64 keeps the texture small enough to repeat clearly.
 WALL_PATTERNS = [
@@ -158,6 +173,24 @@ def gen_icon(icon_id, desc):
         return decode_b64(d["image"]) if isinstance(d["image"], dict) else fetch_png(d["image"])
     raise RuntimeError(f"no image in resp: {json.dumps(d)[:400]}")
 
+def gen_panel(panel_id, w, h, desc):
+    """Custom-sized pixel-art UI panel/button. Opaque, used as background."""
+    r = api_post("/create-image-pixflux", {
+        "description": desc,
+        "image_size": {"width": w, "height": h},
+        "outline": "single color outline",
+        "shading": "basic shading",
+        "detail": "low detail",
+        "no_background": False,
+    })
+    if "background_job_id" in r:
+        d = wait(r["background_job_id"]).get("last_response", {})
+    else:
+        d = r
+    if "image" in d:
+        return decode_b64(d["image"]) if isinstance(d["image"], dict) else fetch_png(d["image"])
+    raise RuntimeError(f"no image in resp: {json.dumps(d)[:400]}")
+
 def gen_wall(pattern_id, desc):
     """Returns a 64x64 tileable wallpaper square via /create-image-pixflux."""
     r = api_post("/create-image-pixflux", {
@@ -190,6 +223,7 @@ def main():
     for tid, d in FLOOR_TILES: targets.append(("floor", tid, d))
     for tid, d in WALL_PATTERNS: targets.append(("wall", tid, d))
     for tid, d in UI_ICONS: targets.append(("icon", tid, d))
+    for tid, w, h, d in UI_PANELS: targets.append(("panel", tid, (w, h, d)))
     if only: targets = [t for t in targets if t[1] == only]
 
     print(f"Textures: {len(targets)} target(s)")
@@ -204,7 +238,10 @@ def main():
         try:
             if   kind == "floor": img = gen_floor(tid, desc)
             elif kind == "wall":  img = gen_wall(tid, desc)
-            else:                 img = gen_icon(tid, desc)
+            elif kind == "icon":  img = gen_icon(tid, desc)
+            else:
+                w, h, d = desc  # panel tuple
+                img = gen_panel(tid, w, h, d)
             img.save(out_p); img.save(out_m)
             print(f"[ok] {time.time()-start:.1f}s  size={img.size}")
         except Exception as e:
