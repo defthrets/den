@@ -26,13 +26,18 @@ const DIR_S = 0, DIR_E = 1, DIR_N = 2, DIR_W = 3;
 
 const WALK_DURATION = 0.35;        // seconds per tile-step (was 0.85)
 const WALK_FRAME_DURATION = 0.09;  // walk-cycle frame duration (was 0.14)
-// Speech bubble lifecycle: rise from avatar head → settle near top →
-// hold → pop (fade + small scale up). Total visible = rise + hold + fade.
-const BUBBLE_TARGET_Y = 110;         // settle line, CSS px from top — sits just below the topbar so bubbles aren't covered.
-const BUBBLE_RISE_TIME = 0.9;        // seconds to ease up to target
-const BUBBLE_HOLD_TIME = 2.6;        // seconds parked at target
-const BUBBLE_FADE_TIME = 0.5;        // fade + pop duration
+// Speech bubble lifecycle: spawn at speaker's head → slow float up to
+// settle line → hold briefly → pop (fade + small scale up). The rise is
+// intentionally long so the eye can follow the message drifting upward.
+const BUBBLE_TARGET_Y = 110;         // settle line, CSS px from top — sits just below the topbar.
+const BUBBLE_RISE_TIME = 3.0;        // seconds to drift up to target (slow, smooth)
+const BUBBLE_HOLD_TIME = 1.0;        // seconds parked at target after arrival
+const BUBBLE_FADE_TIME = 0.6;        // fade + pop duration
 const BUBBLE_LIFETIME = BUBBLE_RISE_TIME + BUBBLE_HOLD_TIME + BUBBLE_FADE_TIME;
+// Throttle: minimum gap (seconds) between consecutive bubbles from the
+// same speaker — keeps the stack from blowing up under spam.
+const BUBBLE_MIN_GAP = 0.4;
+const _lastBubbleAt = {};
 
 // Bump when regenerating sprites so the browser fetches the new PNGs.
 const SPRITE_VERSION = 22;
@@ -607,9 +612,19 @@ function drawAvatar(a) {
 
 // ── Chat bubbles ─────────────────────────────────────────────────────────
 function spawnBubble(a, text) {
+  // Throttle: if this avatar just spoke, drop the new bubble. Keeps
+  // spammy senders from burying the stack.
+  const now = performance.now() / 1000;
+  if (_lastBubbleAt[a.userId] != null
+      && (now - _lastBubbleAt[a.userId]) < BUBBLE_MIN_GAP) {
+    return;
+  }
+  _lastBubbleAt[a.userId] = now;
+
   const { x: wx, y: wy } = avatarWorldPos(a);
   const { sx, sy } = worldToScreen(wx, wy);
-  const headY = sy - FRAME_H * zoom * AVATAR_SCALE_BOOST * AVATAR_Y_FACTOR * FEET_ANCHOR_Y - 4;
+  // Spawn just above the avatar's head, not exactly at the sprite top.
+  const headY = sy - FRAME_H * zoom * AVATAR_SCALE_BOOST * AVATAR_Y_FACTOR * FEET_ANCHOR_Y - 8;
 
   // Newest bubble settles at BUBBLE_TARGET_Y. Existing bubbles whose
   // settled X overlaps get pushed up the stack so we never overlap.
@@ -626,7 +641,7 @@ function spawnBubble(a, text) {
     userId: a.userId,
     text,
     sx,
-    sy: headY,          // start at the speaker's head
+    sy: headY,          // start above the speaker's head
     startY: headY,
     targetY,            // animate up to here
     age: 0,
@@ -642,9 +657,10 @@ function updateBubbles(dt) {
       bubbles.splice(i, 1);
       continue;
     }
-    // Rise phase: ease out cubic from startY → targetY.
+    // Rise phase: gentle ease-out (quadratic) over BUBBLE_RISE_TIME
+    // so the bubble drifts upward smoothly rather than snapping up.
     const t = Math.min(1, b.age / BUBBLE_RISE_TIME);
-    const e = 1 - Math.pow(1 - t, 3);
+    const e = 1 - (1 - t) * (1 - t);
     b.sy = b.startY + (b.targetY - b.startY) * e;
   }
 }
