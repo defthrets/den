@@ -54,6 +54,22 @@ FLOOR_TILES = [
     ("floor_brick",    "single flat isometric red brick tile, plain rust red with thin mortar cross, minimal clean pixel art"),
 ]
 
+# UI icons — small transparent-bg pixel-art glyphs the front-end pulls in
+# as <img> tags or CSS backgrounds. 32x32 source @ 2x css = a crisp 64px
+# rendered icon; smaller chrome (top-bar, send button) shrinks via CSS.
+UI_ICONS = [
+    ("ui_back",     "tiny pixel art chevron arrow pointing left, bold white pixels, transparent background, minimal flat"),
+    ("ui_edit",     "tiny pixel art pencil icon, brown wood with grey tip, transparent background, minimal flat"),
+    ("ui_profile",  "tiny pixel art smiley face icon, yellow with dot eyes and smile, transparent background, minimal flat"),
+    ("ui_send",     "tiny pixel art paper airplane icon, white folded paper, transparent background, minimal flat"),
+    ("ui_lock",     "tiny pixel art padlock icon, gold metal, transparent background, minimal flat"),
+    ("ui_home",     "tiny pixel art house icon, red roof and brown wall, transparent background, minimal flat"),
+    ("ui_rotate",   "tiny pixel art circular rotate arrow icon, white outlined arrow curving clockwise, transparent background, minimal flat"),
+    ("ui_delete",   "tiny pixel art trash can icon, dark grey bin with lid, transparent background, minimal flat"),
+    ("ui_check",    "tiny pixel art checkmark icon, bold green tick, transparent background, minimal flat"),
+    ("ui_close",    "tiny pixel art X close icon, bold white pixels, transparent background, minimal flat"),
+]
+
 # Wall patterns — seamless square that we tile across the wall quad.
 # 64x64 keeps the texture small enough to repeat clearly.
 WALL_PATTERNS = [
@@ -123,6 +139,25 @@ def gen_floor(tile_id, desc):
         return decode_b64(obj["image"])
     raise RuntimeError(f"no image in obj: {json.dumps(obj)[:400]}")
 
+def gen_icon(icon_id, desc):
+    """Small 32x32 pixel-art icon with transparent background."""
+    r = api_post("/create-image-pixflux", {
+        "description": desc,
+        "image_size": {"width": 32, "height": 32},
+        "outline": "single color outline",
+        "shading": "flat shading",
+        "detail": "low detail",
+        "no_background": True,
+        "background_removal_task": "remove_simple_background",
+    })
+    if "background_job_id" in r:
+        d = wait(r["background_job_id"]).get("last_response", {})
+    else:
+        d = r
+    if "image" in d:
+        return decode_b64(d["image"]) if isinstance(d["image"], dict) else fetch_png(d["image"])
+    raise RuntimeError(f"no image in resp: {json.dumps(d)[:400]}")
+
 def gen_wall(pattern_id, desc):
     """Returns a 64x64 tileable wallpaper square via /create-image-pixflux."""
     r = api_post("/create-image-pixflux", {
@@ -154,6 +189,7 @@ def main():
     targets = []
     for tid, d in FLOOR_TILES: targets.append(("floor", tid, d))
     for tid, d in WALL_PATTERNS: targets.append(("wall", tid, d))
+    for tid, d in UI_ICONS: targets.append(("icon", tid, d))
     if only: targets = [t for t in targets if t[1] == only]
 
     print(f"Textures: {len(targets)} target(s)")
@@ -166,7 +202,9 @@ def main():
         start = time.time()
         print(f"  generating {tid:<20} ", end="", flush=True)
         try:
-            img = gen_floor(tid, desc) if kind == "floor" else gen_wall(tid, desc)
+            if   kind == "floor": img = gen_floor(tid, desc)
+            elif kind == "wall":  img = gen_wall(tid, desc)
+            else:                 img = gen_icon(tid, desc)
             img.save(out_p); img.save(out_m)
             print(f"[ok] {time.time()-start:.1f}s  size={img.size}")
         except Exception as e:

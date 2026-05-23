@@ -101,6 +101,11 @@
     font-family: var(--pixel-font);
     font-size: 18px;
     box-shadow: var(--pixel-shadow);
+    overflow: hidden;
+  }
+  .icon-btn img {
+    width: 24px; height: 24px;
+    image-rendering: pixelated;
   }
   .icon-btn:active {
     transform: translate(2px, 2px);
@@ -117,7 +122,10 @@
     display: flex; align-items: center; gap: 6px;
     box-shadow: var(--pixel-shadow);
   }
-  .room-chip .home { color: var(--accent); font-size: 16px; }
+  .room-chip .home {
+    width: 18px; height: 18px;
+    image-rendering: pixelated;
+  }
 
   /* ── Slim chat input bar (always visible) ───────────────────── */
   .input-bar {
@@ -133,7 +141,11 @@
                 transform 200ms cubic-bezier(.4,0,.2,1);
   }
   .input-bar.kbd-open { bottom: 296px; }
-  .input-bar .lock { color: var(--accent); font-size: 14px; margin-left: 4px; }
+  .input-bar .lock {
+    width: 18px; height: 18px;
+    margin-left: 4px;
+    image-rendering: pixelated;
+  }
   .input-bar input {
     flex: 1;
     background: var(--surface-alt);
@@ -159,10 +171,12 @@
     display: flex; align-items: center; justify-content: center;
     color: #000;
     cursor: pointer;
-    font-family: var(--pixel-font);
-    font-weight: bold;
-    font-size: 22px;
     box-shadow: var(--pixel-shadow);
+    padding: 0;
+  }
+  .send img {
+    width: 22px; height: 22px;
+    image-rendering: pixelated;
   }
   .send:active { transform: translate(2px, 2px); box-shadow: 0 0 0 #000; }
 
@@ -232,14 +246,16 @@
     display: flex; align-items: center; justify-content: center;
     color: var(--text);
     cursor: pointer;
-    font-family: var(--pixel-font);
-    font-size: 18px;
     box-shadow: var(--pixel-shadow);
+  }
+  .cust-close img {
+    width: 18px; height: 18px;
+    image-rendering: pixelated;
   }
   .cust-close:active { transform: translate(2px,2px); box-shadow: 0 0 0 #000; }
   .cust-save {
     margin-left: auto;
-    padding: 8px 14px;
+    padding: 6px 12px;
     background: var(--accent);
     color: #000;
     border: 2px solid #000;
@@ -248,6 +264,11 @@
     font-weight: 700; font-size: 14px;
     cursor: pointer;
     box-shadow: var(--pixel-shadow);
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .cust-save img {
+    width: 16px; height: 16px;
+    image-rendering: pixelated;
   }
   .cust-save:active { transform: translate(2px,2px); box-shadow: 0 0 0 #000; }
   .preview-stage {
@@ -476,14 +497,14 @@
     <canvas id="room" width="390" height="844"></canvas>
 
     <div class="topbar">
-      <div class="icon-btn" id="back">&lt;</div>
+      <div class="icon-btn" id="back" title="Back"><img src="textures/ui_back.png?v=44" alt="back"></div>
       <div class="room-chip">
-        <span class="home">⌂</span>
+        <img class="home" src="textures/ui_home.png?v=44" alt="home">
         <span>demo_friend's den</span>
       </div>
       <div style="flex:1"></div>
-      <div class="icon-btn" id="editBtn" title="Edit room">✎</div>
-      <div class="icon-btn profile-icon" id="profile" title="Customise avatar">●</div>
+      <div class="icon-btn" id="editBtn" title="Edit room"><img src="textures/ui_edit.png?v=44" alt="edit"></div>
+      <div class="icon-btn profile-icon" id="profile" title="Customise avatar"><img src="textures/ui_profile.png?v=44" alt="profile"></div>
     </div>
 
     <!-- Room editor palette (hidden until edit mode) -->
@@ -500,9 +521,9 @@
     <!-- Avatar customiser modal -->
     <div class="customiser" id="customiser">
       <div class="cust-header">
-        <div class="cust-close" id="custClose">×</div>
+        <div class="cust-close" id="custClose" title="Close"><img src="textures/ui_close.png?v=44" alt="close"></div>
         <div class="title">My avatar</div>
-        <button class="cust-save" id="custSave">Save</button>
+        <button class="cust-save" id="custSave"><img src="textures/ui_check.png?v=44" alt=""><span>Save</span></button>
       </div>
       <div class="preview-stage">
         <canvas id="avatarPreview" width="32" height="56"></canvas>
@@ -518,9 +539,9 @@
 
     <!-- Slim chat input bar — always visible -->
     <div class="input-bar">
-      <span class="lock">🔒</span>
+      <img class="lock" src="textures/ui_lock.png?v=44" alt="encrypted">
       <input id="msgInput" type="text" placeholder="Say something..." />
-      <button class="send" id="sendBtn">→</button>
+      <button class="send" id="sendBtn" title="Send"><img src="textures/ui_send.png?v=44" alt="send"></button>
     </div>
 
     <!-- Faux mobile keyboard so the preview shows what real users will see -->
@@ -556,12 +577,12 @@
 <div class="meta">Tap a floor tile to walk. Tap the bottom bar to open chat.</div>
 
 <!-- v query busts the browser cache when these files change -->
-<script src="wardrobe.js?v=43"></script>
-<script src="styles.js?v=43"></script>
-<script src="furniture-archive.js?v=43"></script>
-<script src="furniture.js?v=43"></script>
-<script src="renderer.js?v=43"></script>
-<script src="customiser.js?v=43"></script>
-<script src="editor.js?v=43"></script>
+<script src="wardrobe.js?v=44"></script>
+<script src="styles.js?v=44"></script>
+<script src="furniture-archive.js?v=44"></script>
+<script src="furniture.js?v=44"></script>
+<script src="renderer.js?v=44"></script>
+<script src="customiser.js?v=44"></script>
+<script src="editor.js?v=44"></script>
 </body>
 </html>
