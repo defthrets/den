@@ -33,10 +33,18 @@
     return c;
   }
 
+  function section(title) {
+    const h = document.createElement('div');
+    h.className = 'friends-section';
+    h.textContent = title;
+    list.appendChild(h);
+  }
+
   function render() {
     list.innerHTML = '';
     const current = window.friends.denState.current;
 
+    section('Home');
     // "My den" row at the top so you can always navigate home.
     const meRow = document.createElement('div');
     meRow.className = 'friend-row' + (current === 'me' ? ' current' : '');
@@ -51,6 +59,27 @@
     meRow.onclick = () => { window.friends.goHome(); close(); };
     list.appendChild(meRow);
 
+    // Public rooms — Habbo-style shared spaces. Not user-editable.
+    if (window.publicRooms) {
+      section('Public Rooms');
+      for (const r of window.publicRooms.PUBLIC_ROOMS) {
+        const row = document.createElement('div');
+        row.className = 'friend-row public' + (current === `pub:${r.id}` ? ' current' : '');
+        row.innerHTML = `
+          <div class="avatar public-thumb">
+            <img src="textures/ui_home.png?v=49" alt="">
+          </div>
+          <div class="meta">
+            <div class="name">${r.name}</div>
+            <div class="sub">${r.description} · ${r.npcs.length + 1}/30</div>
+          </div>
+        `;
+        row.onclick = () => { window.publicRooms.visitPublicRoom(r.id); close(); };
+        list.appendChild(row);
+      }
+    }
+
+    section('Friends');
     for (const f of window.friends.FRIENDS) {
       const row = document.createElement('div');
       row.className = 'friend-row' + (current === f.id ? ' current' : '');

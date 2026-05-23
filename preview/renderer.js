@@ -1000,6 +1000,8 @@ setTimeout(() => spawnBubble(friend, 'hey welcome to my den :)'), 600);
 window.den = {
   me,
   friend,
+  avatars,    // exposed so friends.js / public-rooms.js can add/remove NPCs
+  makeAvatar, // for NPC spawning
   presets: [
     { id: 'casual_blue_boy',  name: 'Boy',  body: 'boy'  },
     { id: 'casual_blue_girl', name: 'Girl', body: 'girl' },

@@ -111,6 +111,9 @@ function setRoomChipName(text) {
 function visitFriend(id) {
   const f = FRIENDS.find(x => x.id === id);
   if (!f) return;
+  if (window.publicRooms && window.publicRooms.clearPublicRoom) {
+    window.publicRooms.clearPublicRoom();
+  }
   denState.current = id;
   applyDen(f.den);
   // Spawn me at the door, friend at their idle spot.
@@ -134,6 +137,10 @@ function visitFriend(id) {
 }
 
 function goHome() {
+  // If we're leaving a public room, clear NPC avatars first.
+  if (window.publicRooms && window.publicRooms.clearPublicRoom) {
+    window.publicRooms.clearPublicRoom();
+  }
   denState.current = 'me';
   applyDen(MY_DEN);
   if (window.den && window.den.me) {
