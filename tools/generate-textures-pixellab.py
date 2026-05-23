@@ -82,6 +82,10 @@ UI_PANELS = [
     ("ui_btn_dark",          64, 32, "pixel art chunky game button face, dark slate grey with white outline, subtle bevelled top highlight, classic Habbo Hotel UI style"),
     ("ui_btn_dark_hover",    64, 32, "pixel art chunky game button face, medium slate grey with white outline, brighter bevelled top highlight, hover state, classic Habbo Hotel UI style"),
     ("ui_btn_dark_active",   64, 32, "pixel art chunky rectangular button skin, BLANK very dark grey recessed inset, white outline, no text no letters no symbols, retro game UI"),
+    # 40x40 SQUARE chunky button skins for icon buttons in the top bar.
+    ("ui_btn_sq_dark",        40, 40, "pixel art chunky SQUARE button skin, dark slate grey with white outline, subtle bevelled top highlight, blank center, no text no letters no symbols, retro game UI"),
+    ("ui_btn_sq_dark_hover",  40, 40, "pixel art chunky SQUARE button skin, medium slate grey with white outline, brighter bevelled top highlight, blank center, no text no letters no symbols, retro game UI"),
+    ("ui_btn_sq_dark_active", 40, 40, "pixel art chunky SQUARE button skin, very dark grey recessed inset, white outline, blank center, no text no letters no symbols, retro game UI"),
     # 192x48 ornate header banner used by the room chip
     ("ui_panel_top", 192, 48, "pixel art game UI horizontal banner, dark wood with brass corner studs, ornate scroll edges, empty middle for label, classic Habbo Hotel dialog style"),
     # 128x40 input-field skin
