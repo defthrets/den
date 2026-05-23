@@ -85,15 +85,15 @@
   .topbar {
     position: absolute;
     top: 0; left: 0; right: 0;
-    padding: 14px 16px 8px;
+    padding: 14px 10px 8px;
     display: flex; align-items: center;
-    gap: 10px;
+    gap: 6px;
     z-index: 2;
   }
   .icon-btn {
     width: 40px; height: 40px;
     border-radius: 0;
-    background: url('textures/ui_btn_sq_dark.png?v=48') center/100% 100% no-repeat;
+    background: url('textures/ui_btn_sq_dark.png?v=49') center/100% 100% no-repeat;
     image-rendering: pixelated;
     border: 0;
     display: flex; align-items: center; justify-content: center;
@@ -106,13 +106,13 @@
     width: 22px; height: 22px;
     image-rendering: pixelated;
   }
-  .icon-btn:hover  { background-image: url('textures/ui_btn_sq_dark_hover.png?v=48'); }
-  .icon-btn:active { background-image: url('textures/ui_btn_sq_dark_active.png?v=48');
+  .icon-btn:hover  { background-image: url('textures/ui_btn_sq_dark_hover.png?v=49'); }
+  .icon-btn:active { background-image: url('textures/ui_btn_sq_dark_active.png?v=49');
                      transform: translate(2px, 2px); filter: none; }
   .room-chip {
     min-height: 36px;
     padding: 6px 18px;
-    background: url('textures/ui_panel_top.png?v=48') center/100% 100% no-repeat;
+    background: url('textures/ui_panel_top.png?v=49') center/100% 100% no-repeat;
     image-rendering: pixelated;
     border: 0; border-radius: 0;
     color: #f5e6c8;
@@ -148,7 +148,7 @@
   }
   .input-bar input {
     flex: 1;
-    background: url('textures/ui_input_bg.png?v=48') center/100% 100% no-repeat;
+    background: url('textures/ui_input_bg.png?v=49') center/100% 100% no-repeat;
     image-rendering: pixelated;
     border: 0;
     color: var(--text);
@@ -165,7 +165,7 @@
   .input-bar input::placeholder { color: var(--text-muted); }
   .send {
     width: 48px; height: 36px;
-    background: url('textures/ui_btn_amber.png?v=48') center/100% 100% no-repeat;
+    background: url('textures/ui_btn_amber.png?v=49') center/100% 100% no-repeat;
     image-rendering: pixelated;
     border: 0; border-radius: 0;
     display: flex; align-items: center; justify-content: center;
@@ -179,8 +179,8 @@
     image-rendering: pixelated;
     margin-top: -2px;
   }
-  .send:hover  { background-image: url('textures/ui_btn_amber_hover.png?v=48'); }
-  .send:active { background-image: url('textures/ui_btn_amber_active.png?v=48');
+  .send:hover  { background-image: url('textures/ui_btn_amber_hover.png?v=49'); }
+  .send:active { background-image: url('textures/ui_btn_amber_active.png?v=49');
                  transform: translate(2px, 2px); filter: none; }
 
   /* ── Faux mobile keyboard (preview only) ──────────────────── */
@@ -260,7 +260,7 @@
     margin-left: auto;
     min-width: 72px; height: 32px;
     padding: 0 12px;
-    background: url('textures/ui_btn_amber.png?v=48') center/100% 100% no-repeat;
+    background: url('textures/ui_btn_amber.png?v=49') center/100% 100% no-repeat;
     image-rendering: pixelated;
     color: #1a1a1a;
     border: 0; border-radius: 0;
@@ -274,8 +274,8 @@
     width: 14px; height: 14px;
     image-rendering: pixelated;
   }
-  .cust-save:hover  { background-image: url('textures/ui_btn_amber_hover.png?v=48'); }
-  .cust-save:active { background-image: url('textures/ui_btn_amber_active.png?v=48');
+  .cust-save:hover  { background-image: url('textures/ui_btn_amber_hover.png?v=49'); }
+  .cust-save:active { background-image: url('textures/ui_btn_amber_active.png?v=49');
                       transform: translate(2px,2px); filter: none; }
   .preview-stage {
     height: 200px;
@@ -361,6 +361,68 @@
     cursor: pointer;
   }
 
+  /* ── Friends list modal ───────────────────────────────────────── */
+  .friends-modal {
+    position: absolute;
+    inset: 0;
+    background: rgba(13,17,23,0.92);
+    backdrop-filter: blur(4px);
+    z-index: 10;
+    display: flex; flex-direction: column;
+    transform: translateY(100%);
+    transition: transform 280ms cubic-bezier(.4,0,.2,1);
+  }
+  .friends-modal.open { transform: translateY(0); }
+  .friends-list {
+    flex: 1; overflow-y: auto;
+    padding: 14px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .friend-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 14px;
+    background: var(--surface);
+    border: 2px solid var(--text);
+    image-rendering: pixelated;
+    cursor: pointer;
+    filter: drop-shadow(2px 2px 0 #000);
+    min-height: 56px;
+  }
+  .friend-row:hover  { background: #232b40; }
+  .friend-row:active { transform: translate(2px,2px); filter: none; }
+  .friend-row.current {
+    border-color: var(--accent);
+  }
+  .friend-row .avatar {
+    width: 40px; height: 40px;
+    background: var(--surface);
+    border: 2px solid var(--text);
+    flex: 0 0 auto;
+    display: flex; align-items: center; justify-content: center;
+    image-rendering: pixelated;
+    overflow: hidden;
+  }
+  .friend-row .avatar canvas {
+    width: 32px; height: 32px;
+    image-rendering: pixelated;
+  }
+  .friend-row .meta {
+    flex: 1;
+    color: var(--text);
+    font-family: var(--pixel-font);
+  }
+  .friend-row .meta .name {
+    font-size: 16px; font-weight: 600;
+  }
+  .friend-row .meta .sub {
+    font-size: 12px; color: var(--text-muted);
+    margin-top: 2px;
+  }
+  .friend-row.current .meta .sub::after {
+    content: ' (you are here)';
+    color: var(--accent);
+  }
+
   /* ── Room editor panel ────────────────────────────────────────── */
   .editor-panel {
     position: absolute;
@@ -371,7 +433,7 @@
        interior fill stretch to fit any panel size. */
     border: 24px solid transparent;
     border-bottom: 0;
-    border-image: url('textures/ui_panel_frame.png?v=48') 32 / 24px 24px 0 24px / 0 stretch;
+    border-image: url('textures/ui_panel_frame.png?v=49') 32 / 24px 24px 0 24px / 0 stretch;
     image-rendering: pixelated;
     z-index: 6;
     transform: translateY(100%);
@@ -403,7 +465,7 @@
     min-width: 64px; height: 32px;
     padding: 0 10px;
     margin-right: 6px;
-    background: url('textures/ui_btn_dark.png?v=48') center/100% 100% no-repeat;
+    background: url('textures/ui_btn_dark.png?v=49') center/100% 100% no-repeat;
     image-rendering: pixelated;
     color: var(--text);
     border: 0; border-radius: 0;
@@ -413,23 +475,23 @@
     display: inline-flex; align-items: center; justify-content: center;
     filter: drop-shadow(2px 2px 0 #000);
   }
-  .editor-mode:hover { background-image: url('textures/ui_btn_dark_hover.png?v=48'); }
+  .editor-mode:hover { background-image: url('textures/ui_btn_dark_hover.png?v=49'); }
   .editor-mode:active,
   .editor-done:active { transform: translate(2px,2px); filter: none; }
-  .editor-mode:active   { background-image: url('textures/ui_btn_dark_active.png?v=48'); }
+  .editor-mode:active   { background-image: url('textures/ui_btn_dark_active.png?v=49'); }
   .editor-done {
-    background-image: url('textures/ui_btn_amber.png?v=48');
+    background-image: url('textures/ui_btn_amber.png?v=49');
     color: #1a1a1a;
     font-weight: 700;
     margin-right: 0;
   }
-  .editor-done:hover  { background-image: url('textures/ui_btn_amber_hover.png?v=48'); }
-  .editor-done:active { background-image: url('textures/ui_btn_amber_active.png?v=48'); }
+  .editor-done:hover  { background-image: url('textures/ui_btn_amber_hover.png?v=49'); }
+  .editor-done:active { background-image: url('textures/ui_btn_amber_active.png?v=49'); }
   .editor-mode.active {
-    background-image: url('textures/ui_btn_amber.png?v=48');
+    background-image: url('textures/ui_btn_amber.png?v=49');
     color: #1a1a1a;
   }
-  .editor-mode.active:hover { background-image: url('textures/ui_btn_amber_hover.png?v=48'); }
+  .editor-mode.active:hover { background-image: url('textures/ui_btn_amber_hover.png?v=49'); }
   /* Slight raise + glow on the picked-up item so it's obvious it's being moved */
   body.editor-picked-up canvas#room { cursor: grab; }
   .editor-palette {
@@ -459,7 +521,7 @@
   .palette-tabs::-webkit-scrollbar-thumb,
   .palette-row::-webkit-scrollbar-thumb,
   .cust-content::-webkit-scrollbar-thumb {
-    background: url('textures/ui_btn_dark.png?v=48') center/100% 100% no-repeat;
+    background: url('textures/ui_btn_dark.png?v=49') center/100% 100% no-repeat;
     image-rendering: pixelated;
     border: 0;
     border-radius: 0;
@@ -469,12 +531,12 @@
   .palette-tabs::-webkit-scrollbar-thumb:hover,
   .palette-row::-webkit-scrollbar-thumb:hover,
   .cust-content::-webkit-scrollbar-thumb:hover {
-    background-image: url('textures/ui_btn_dark_hover.png?v=48');
+    background-image: url('textures/ui_btn_dark_hover.png?v=49');
   }
   .palette-tabs::-webkit-scrollbar-thumb:active,
   .palette-row::-webkit-scrollbar-thumb:active,
   .cust-content::-webkit-scrollbar-thumb:active {
-    background-image: url('textures/ui_btn_amber.png?v=48');
+    background-image: url('textures/ui_btn_amber.png?v=49');
   }
   .palette-tabs::-webkit-scrollbar-corner,
   .palette-row::-webkit-scrollbar-corner,
@@ -556,14 +618,25 @@
     <canvas id="room" width="390" height="844"></canvas>
 
     <div class="topbar">
-      <div class="icon-btn" id="back" title="Back"><img src="textures/ui_back.png?v=48" alt="back"></div>
+      <div class="icon-btn" id="back" title="Back to my den"><img src="textures/ui_back.png?v=49" alt="back"></div>
       <div class="room-chip">
-        <img class="home" src="textures/ui_home.png?v=48" alt="home">
-        <span>demo_friend's den</span>
+        <img class="home" src="textures/ui_home.png?v=49" alt="home">
+        <span id="roomName">demo_friend's den</span>
       </div>
       <div style="flex:1"></div>
-      <div class="icon-btn" id="editBtn" title="Edit room"><img src="textures/ui_edit.png?v=48" alt="edit"></div>
-      <div class="icon-btn profile-icon" id="profile" title="Customise avatar"><img src="textures/ui_profile.png?v=48" alt="profile"></div>
+      <div class="icon-btn" id="friendsBtn" title="Friends"><img src="textures/ui_home.png?v=49" alt="friends"></div>
+      <div class="icon-btn" id="editBtn" title="Edit room"><img src="textures/ui_edit.png?v=49" alt="edit"></div>
+      <div class="icon-btn profile-icon" id="profile" title="Customise avatar"><img src="textures/ui_profile.png?v=49" alt="profile"></div>
+    </div>
+
+    <!-- Friends list modal -->
+    <div class="friends-modal" id="friendsModal">
+      <div class="cust-header">
+        <div class="cust-close" id="friendsClose" title="Close"><img src="textures/ui_close.png?v=49" alt="close"></div>
+        <div class="title">Friends</div>
+        <button class="cust-save" id="friendAddBtn"><img src="textures/ui_check.png?v=49" alt=""><span>+ Add</span></button>
+      </div>
+      <div class="friends-list" id="friendsList"></div>
     </div>
 
     <!-- Room editor palette (hidden until edit mode) -->
@@ -580,9 +653,9 @@
     <!-- Avatar customiser modal -->
     <div class="customiser" id="customiser">
       <div class="cust-header">
-        <div class="cust-close" id="custClose" title="Close"><img src="textures/ui_close.png?v=48" alt="close"></div>
+        <div class="cust-close" id="custClose" title="Close"><img src="textures/ui_close.png?v=49" alt="close"></div>
         <div class="title">My avatar</div>
-        <button class="cust-save" id="custSave"><img src="textures/ui_check.png?v=48" alt=""><span>Save</span></button>
+        <button class="cust-save" id="custSave"><img src="textures/ui_check.png?v=49" alt=""><span>Save</span></button>
       </div>
       <div class="preview-stage">
         <canvas id="avatarPreview" width="32" height="56"></canvas>
@@ -598,9 +671,9 @@
 
     <!-- Slim chat input bar — always visible -->
     <div class="input-bar">
-      <img class="lock" src="textures/ui_lock.png?v=48" alt="encrypted">
+      <img class="lock" src="textures/ui_lock.png?v=49" alt="encrypted">
       <input id="msgInput" type="text" placeholder="Say something..." />
-      <button class="send" id="sendBtn" title="Send"><img src="textures/ui_send.png?v=48" alt="send"></button>
+      <button class="send" id="sendBtn" title="Send"><img src="textures/ui_send.png?v=49" alt="send"></button>
     </div>
 
     <!-- Faux mobile keyboard so the preview shows what real users will see -->
@@ -636,12 +709,14 @@
 <div class="meta">Tap a floor tile to walk. Tap the bottom bar to open chat.</div>
 
 <!-- v query busts the browser cache when these files change -->
-<script src="wardrobe.js?v=48"></script>
-<script src="styles.js?v=48"></script>
-<script src="furniture-archive.js?v=48"></script>
-<script src="furniture.js?v=48"></script>
-<script src="renderer.js?v=48"></script>
-<script src="customiser.js?v=48"></script>
-<script src="editor.js?v=48"></script>
+<script src="wardrobe.js?v=49"></script>
+<script src="styles.js?v=49"></script>
+<script src="furniture-archive.js?v=49"></script>
+<script src="furniture.js?v=49"></script>
+<script src="renderer.js?v=49"></script>
+<script src="customiser.js?v=49"></script>
+<script src="editor.js?v=49"></script>
+<script src="friends.js?v=49"></script>
+<script src="friends-ui.js?v=49"></script>
 </body>
 </html>
