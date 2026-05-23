@@ -30,7 +30,7 @@ const BUBBLE_LIFETIME = 4.5;
 const BUBBLE_RISE_SPEED = 26;
 
 // Bump when regenerating sprites so the browser fetches the new PNGs.
-const SPRITE_VERSION = 21;
+const SPRITE_VERSION = 22;
 
 const PAL = {
   skyTop:        '#1A2744',
@@ -301,6 +301,28 @@ function screenToWorld(sx, sy) {
   };
 }
 
+// ── Texture cache (PixelLab floor/wall PNGs) ───────────────────────────
+const _texCache = {};
+function loadTexture(name) {
+  if (_texCache[name]) return _texCache[name];
+  const img = new Image();
+  img.src = `textures/${name}.png?v=${SPRITE_VERSION}`;
+  _texCache[name] = img;
+  return img;
+}
+// Built-in offset of the PixelLab iso tile inside the 64x64 canvas: the
+// diamond's north corner sits at (32, 22) — see tools/generate-textures.
+const FLOOR_TILE_NORTH_X = 32;
+const FLOOR_TILE_NORTH_Y = 22;
+const _wallPatternCache = {};
+function wallPatternFor(styleId) {
+  const tex = loadTexture(`wall_${styleId}`);
+  if (!tex.complete || tex.naturalWidth === 0) return null;
+  const key = `${styleId}@${zoom}`;
+  if (_wallPatternCache[key]) return _wallPatternCache[key];
+  return _wallPatternCache[key] = ctx.createPattern(tex, 'repeat');
+}
+
 // ── Floor / walls ────────────────────────────────────────────────────────
 function drawFloorTile(col, row) {
   const c = tileToScreen(col, row);
@@ -310,6 +332,25 @@ function drawFloorTile(col, row) {
   const fh = FACE_H * zoom;
   const alt = (col + row) % 2 === 0;
   const fs = (typeof currentFloorStyle === 'function') ? currentFloorStyle() : null;
+
+  // PixelLab texture path: if a floor_<id>.png exists, drawImage it
+  // and skip the procedural diamond entirely.
+  if (fs) {
+    const tex = loadTexture(`floor_${fs.id}`);
+    if (tex.complete && tex.naturalWidth > 0) {
+      const dw = tex.naturalWidth  * zoom;
+      const dhTex = tex.naturalHeight * zoom;
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(
+        tex,
+        Math.round(sx - FLOOR_TILE_NORTH_X * zoom),
+        Math.round(sy - FLOOR_TILE_NORTH_Y * zoom),
+        Math.round(dw), Math.round(dhTex),
+      );
+      return;
+    }
+  }
+
   const topA = fs ? fs.topA : PAL.floorTopA;
   const topB = fs ? fs.topB : PAL.floorTopB;
   const leftFace = fs ? fs.leftFace : PAL.floorLeftFace;
@@ -374,6 +415,54 @@ function drawWallPanel(bLw, bRw, wh, fill, divisions, style) {
   const pBR = worldToScreen(bRw.x, bRw.y);
   const pTL = worldToScreen(bLw.x, bLw.y - wh);
   const pTR = worldToScreen(bRw.x, bRw.y - wh);
+
+  // PixelLab wall texture path: tile the wall_<id>.png across the panel.
+  // We skew the pattern so each repeat lays along the wall surface — that
+  // way the texture follows the wall's iso angle instead of staying axis-
+  // aligned on screen.
+  const pat = style ? wallPatternFor(style.id) : null;
+  if (pat) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(pBL.sx, pBL.sy);
+    ctx.lineTo(pBR.sx, pBR.sy);
+    ctx.lineTo(pTR.sx, pTR.sy);
+    ctx.lineTo(pTL.sx, pTL.sy);
+    ctx.closePath();
+    ctx.clip();
+    // Skew: the wall runs from pBL to pBR (one tile-row along the back),
+    // and from pBL to pTL (vertical = wall height). Build a transform
+    // that maps the texture's unit square to a tile of the skewed wall.
+    const tw = 64 * zoom;  // texture width on screen per repeat
+    const th = 64 * zoom;
+    // Tangent along the wall (one tile's worth in screen px).
+    const slopeY = (pBR.sy - pBL.sy) / Math.max(1, Math.hypot(pBR.sx - pBL.sx, pBR.sy - pBL.sy)) * tw;
+    const slopeX = (pBR.sx - pBL.sx) / Math.max(1, Math.hypot(pBR.sx - pBL.sx, pBR.sy - pBL.sy)) * tw;
+    ctx.setTransform(
+      slopeX / tw, slopeY / tw,  // x basis: along the wall
+      0, 1,                       // y basis: straight down (vertical)
+      pBL.sx, pBL.sy - wh * zoom, // origin: top-left of wall quad
+    );
+    // Translate so y=0 is the top of the wall.
+    ctx.fillStyle = pat;
+    // We need the pattern transform inverse so the repeat aligns to our basis.
+    // Simplest: just fill a rect in this transformed space.
+    const wallScreenW = Math.hypot(pBR.sx - pBL.sx, pBR.sy - pBL.sy);
+    ctx.fillRect(0, 0, wallScreenW, wh * zoom);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.restore();
+    // Outline on top
+    ctx.beginPath();
+    ctx.moveTo(pBL.sx, pBL.sy);
+    ctx.lineTo(pBR.sx, pBR.sy);
+    ctx.lineTo(pTR.sx, pTR.sy);
+    ctx.lineTo(pTL.sx, pTL.sy);
+    ctx.closePath();
+    ctx.strokeStyle = (style && style.outline) || PAL.wallOutline;
+    ctx.lineWidth = 0.75;
+    ctx.stroke();
+    return;
+  }
 
   ctx.beginPath();
   ctx.moveTo(pBL.sx, pBL.sy);
