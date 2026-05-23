@@ -40,15 +40,18 @@ PREVIEW_OUT = REPO / "preview" / "textures"
 MOBILE_OUT.mkdir(parents=True, exist_ok=True)
 PREVIEW_OUT.mkdir(parents=True, exist_ok=True)
 
-# Iso floor tiles — 64x32 final canvas (matches TILE_W x TILE_H in renderer).
+# Iso floor tiles — 64x32 final canvas. Prompts kept short + explicit
+# about "flat" / "minimal" / "simple" so PixelLab doesn't add busy
+# noise. Combined with shading="flat shading", detail="low detail",
+# outline="lineless" in gen_floor() to push for clean blocky pixel art.
 FLOOR_TILES = [
-    ("floor_stone",    "isometric grey stone floor tile, flat shading, classic Habbo pixel art"),
-    ("floor_wood",     "isometric wooden plank floor tile, warm brown grain, classic Habbo pixel art"),
-    ("floor_concrete", "isometric concrete floor tile, light grey, faint surface speckle, classic Habbo pixel art"),
-    ("floor_tile_w",   "isometric white ceramic tile floor with subtle grout, classic Habbo pixel art"),
-    ("floor_tile_d",   "isometric dark slate floor tile with grout lines, classic Habbo pixel art"),
-    ("floor_marble",   "isometric polished marble floor tile, cream white with grey veining, classic Habbo pixel art"),
-    ("floor_brick",    "isometric red brick floor tile with mortar lines, classic Habbo pixel art"),
+    ("floor_stone",    "single flat isometric stone floor tile, plain light grey, minimal clean pixel art"),
+    ("floor_wood",     "single flat isometric wooden plank floor tile, plain warm brown, two-tone planks, minimal clean pixel art"),
+    ("floor_concrete", "single flat isometric concrete floor tile, plain solid grey, minimal clean pixel art"),
+    ("floor_tile_w",   "single flat isometric white ceramic tile, plain white with thin grey grout cross, minimal clean pixel art"),
+    ("floor_tile_d",   "single flat isometric dark slate tile, plain dark grey with thin grout cross, minimal clean pixel art"),
+    ("floor_marble",   "single flat isometric marble tile, plain pale cream with one subtle grey vein, minimal clean pixel art"),
+    ("floor_brick",    "single flat isometric red brick tile, plain rust red with thin mortar cross, minimal clean pixel art"),
 ]
 
 # Wall patterns — seamless square that we tile across the wall quad.
@@ -106,8 +109,9 @@ def gen_floor(tile_id, desc):
         "image_size": {"width": 64, "height": 64},
         "isometric_tile_size": 32,
         "isometric_tile_shape": "thin tile",
-        "outline": "single color outline",
-        "shading": "basic shading",
+        "outline": "lineless",          # no rim, lets the tile colour read flat
+        "shading": "flat shading",      # no gradients — cleaner pixel art
+        "detail": "low detail",         # fewer high-frequency speckles
     })
     tile_pl_id = r.get("tile_id")
     jid = r.get("background_job_id")
