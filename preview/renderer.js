@@ -451,26 +451,21 @@ function drawWallPanel(bLw, bRw, wh, fill, divisions, style) {
     ctx.lineTo(pTL.sx, pTL.sy);
     ctx.closePath();
     ctx.clip();
-    // Skew: the wall runs from pBL to pBR (one tile-row along the back),
-    // and from pBL to pTL (vertical = wall height). Build a transform
-    // that maps the texture's unit square to a tile of the skewed wall.
-    const tw = 64 * zoom;  // texture width on screen per repeat
-    const th = 64 * zoom;
-    // Tangent along the wall (one tile's worth in screen px).
-    const slopeY = (pBR.sy - pBL.sy) / Math.max(1, Math.hypot(pBR.sx - pBL.sx, pBR.sy - pBL.sy)) * tw;
-    const slopeX = (pBR.sx - pBL.sx) / Math.max(1, Math.hypot(pBR.sx - pBL.sx, pBR.sy - pBL.sy)) * tw;
-    ctx.setTransform(
-      slopeX / tw, slopeY / tw,  // x basis: along the wall
-      0, 1,                       // y basis: straight down (vertical)
-      pBL.sx, pBL.sy - wh * zoom, // origin: top-left of wall quad
+    // Tangent along the wall surface — one texture's worth of screen pixels.
+    const tw = 64 * zoom;
+    const wallScreenW = Math.hypot(pBR.sx - pBL.sx, pBR.sy - pBL.sy) || 1;
+    const slopeX = (pBR.sx - pBL.sx) / wallScreenW * tw;
+    const slopeY = (pBR.sy - pBL.sy) / wallScreenW * tw;
+    // ctx.transform() MULTIPLIES into the existing matrix — preserves the
+    // ctx.scale(dpr, dpr) we set in resize(). setTransform() would wipe
+    // dpr scaling and break wall rendering on Retina / mobile screens.
+    ctx.transform(
+      slopeX / tw, slopeY / tw,    // x basis: along the wall
+      0, 1,                         // y basis: straight down (vertical)
+      pBL.sx, pBL.sy - wh * zoom,   // origin: top-left of wall quad
     );
-    // Translate so y=0 is the top of the wall.
     ctx.fillStyle = pat;
-    // We need the pattern transform inverse so the repeat aligns to our basis.
-    // Simplest: just fill a rect in this transformed space.
-    const wallScreenW = Math.hypot(pBR.sx - pBL.sx, pBR.sy - pBL.sy);
     ctx.fillRect(0, 0, wallScreenW, wh * zoom);
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.restore();
     // Outline on top
     ctx.beginPath();
