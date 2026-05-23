@@ -26,8 +26,13 @@ const DIR_S = 0, DIR_E = 1, DIR_N = 2, DIR_W = 3;
 
 const WALK_DURATION = 0.35;        // seconds per tile-step (was 0.85)
 const WALK_FRAME_DURATION = 0.09;  // walk-cycle frame duration (was 0.14)
-const BUBBLE_LIFETIME = 4.5;
-const BUBBLE_RISE_SPEED = 26;
+// Speech bubble lifecycle: rise from avatar head → settle near top →
+// hold → pop (fade + small scale up). Total visible = rise + hold + fade.
+const BUBBLE_TARGET_Y = 110;         // settle line, CSS px from top — sits just below the topbar so bubbles aren't covered.
+const BUBBLE_RISE_TIME = 0.9;        // seconds to ease up to target
+const BUBBLE_HOLD_TIME = 2.6;        // seconds parked at target
+const BUBBLE_FADE_TIME = 0.5;        // fade + pop duration
+const BUBBLE_LIFETIME = BUBBLE_RISE_TIME + BUBBLE_HOLD_TIME + BUBBLE_FADE_TIME;
 
 // Bump when regenerating sprites so the browser fetches the new PNGs.
 const SPRITE_VERSION = 22;
@@ -606,10 +611,14 @@ function spawnBubble(a, text) {
   const { sx, sy } = worldToScreen(wx, wy);
   const headY = sy - FRAME_H * zoom * AVATAR_SCALE_BOOST * AVATAR_Y_FACTOR * FEET_ANCHOR_Y - 4;
 
-  // Push older bubbles from this avatar higher to stack neatly
+  // Newest bubble settles at BUBBLE_TARGET_Y. Existing bubbles whose
+  // settled X overlaps get pushed up the stack so we never overlap.
+  const stackStep = 28;
+  let targetY = BUBBLE_TARGET_Y;
   for (const b of bubbles) {
-    if (b.userId === a.userId && b.targetY > headY - 30) {
-      b.targetY -= 24;
+    // If horizontally near, bump the older one up by stackStep.
+    if (Math.abs(b.sx - sx) < 80 && b.targetY >= targetY - 4) {
+      b.targetY -= stackStep;
     }
   }
 
@@ -617,8 +626,9 @@ function spawnBubble(a, text) {
     userId: a.userId,
     text,
     sx,
-    sy: headY,
-    targetY: headY,
+    sy: headY,          // start at the speaker's head
+    startY: headY,
+    targetY,            // animate up to here
     age: 0,
     lifetime: BUBBLE_LIFETIME,
   });
@@ -628,10 +638,14 @@ function updateBubbles(dt) {
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i];
     b.age += dt;
-    b.targetY -= BUBBLE_RISE_SPEED * dt;
-    // Ease toward target
-    b.sy += (b.targetY - b.sy) * Math.min(1, dt * 6);
-    if (b.age >= b.lifetime) bubbles.splice(i, 1);
+    if (b.age >= b.lifetime) {
+      bubbles.splice(i, 1);
+      continue;
+    }
+    // Rise phase: ease out cubic from startY → targetY.
+    const t = Math.min(1, b.age / BUBBLE_RISE_TIME);
+    const e = 1 - Math.pow(1 - t, 3);
+    b.sy = b.startY + (b.targetY - b.startY) * e;
   }
 }
 
@@ -641,16 +655,27 @@ function drawBubbles() {
   ctx.textAlign = 'left';
 
   for (const b of bubbles) {
-    const fadeStart = b.lifetime * 0.7;
-    const alpha = b.age > fadeStart
-      ? Math.max(0, 1 - (b.age - fadeStart) / (b.lifetime - fadeStart))
-      : 1;
-    const popIn = Math.min(1, b.age / 0.15);
-    drawSpeechBubble(b.sx, b.sy, b.text, alpha * popIn, b.age < 0.4);
+    const fadeStart = BUBBLE_LIFETIME - BUBBLE_FADE_TIME;
+    let alpha = 1;
+    let scale = 1;
+    if (b.age >= fadeStart) {
+      // Final 0.5s — fade out + small pop scale-up.
+      const f = (b.age - fadeStart) / BUBBLE_FADE_TIME;
+      alpha = Math.max(0, 1 - f);
+      scale = 1 + 0.18 * f;
+    } else {
+      // Pop-in: scale up briefly at spawn.
+      const popIn = Math.min(1, b.age / 0.15);
+      scale = 0.6 + 0.4 * popIn;
+      alpha = popIn;
+    }
+    // Tail visible only while still attached to speaker (rise phase).
+    const withTail = b.age < BUBBLE_RISE_TIME * 0.5;
+    drawSpeechBubble(b.sx, b.sy, b.text, alpha, withTail, scale);
   }
 }
 
-function drawSpeechBubble(cx, cy, text, alpha, withTail) {
+function drawSpeechBubble(cx, cy, text, alpha, withTail, scale) {
   const padX = 10, padY = 6;
   const maxW = 220;
   const m = ctx.measureText(text);
@@ -662,6 +687,11 @@ function drawSpeechBubble(cx, cy, text, alpha, withTail) {
 
   ctx.save();
   ctx.globalAlpha = alpha;
+  if (scale && scale !== 1) {
+    ctx.translate(cx, cy);
+    ctx.scale(scale, scale);
+    ctx.translate(-cx, -cy);
+  }
 
   // Shadow
   ctx.fillStyle = 'rgba(0,0,0,0.30)';
