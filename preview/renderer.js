@@ -935,14 +935,38 @@ const input    = document.getElementById('msgInput');
 const sendBtn  = document.getElementById('sendBtn');
 const keyboard = document.getElementById('keyboard');
 
-// Show the faux keyboard whenever the input is focused. On a real device,
-// the OS keyboard slides up and Flutter's MediaQuery.viewInsets handles
-// the layout shift — this is just the preview's visual surrogate.
+// Detect touch devices — on a real phone the OS keyboard appears
+// natively, so the faux keyboard would be a duplicate. We only show
+// the surrogate keyboard on desktop / non-touch browsers.
+const isTouchDevice = matchMedia('(pointer: coarse)').matches
+                    || (navigator.maxTouchPoints > 0);
 const inputBar = document.querySelector('.input-bar');
-function openKeyboard()  { keyboard.classList.add('open');    inputBar.classList.add('kbd-open');    }
-function closeKeyboard() { keyboard.classList.remove('open'); inputBar.classList.remove('kbd-open'); }
+function openKeyboard()  {
+  if (isTouchDevice) return;  // OS keyboard handles it
+  keyboard.classList.add('open');
+  inputBar.classList.add('kbd-open');
+}
+function closeKeyboard() {
+  if (isTouchDevice) return;
+  keyboard.classList.remove('open');
+  inputBar.classList.remove('kbd-open');
+}
 input.addEventListener('focus', openKeyboard);
 input.addEventListener('blur',  closeKeyboard);
+// Hint the OS keyboard to show a "send" enter key.
+input.setAttribute('enterkeyhint', 'send');
+// On mobile, keep the input bar visible above the OS keyboard via
+// VisualViewport — fall back to default position if unsupported.
+if (isTouchDevice && window.visualViewport) {
+  const vv = window.visualViewport;
+  const sync = () => {
+    const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    inputBar.style.bottom = offset + 'px';
+  };
+  vv.addEventListener('resize', sync);
+  vv.addEventListener('scroll', sync);
+  sync();
+}
 
 sendBtn.addEventListener('click', send);
 input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
