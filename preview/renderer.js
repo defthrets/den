@@ -807,12 +807,16 @@ requestAnimationFrame(loop);
 //   - Outside the editor, pointerup walks the avatar to the tile.
 let _downAt = 0;
 let _downTile = null;
+let _downPixel = null;
 let _dragging = false;
 
-function tileFromEvent(e) {
+function pixelFromEvent(e) {
   const rect = canvas.getBoundingClientRect();
-  const px = e.clientX - rect.left;
-  const py = e.clientY - rect.top;
+  return { px: e.clientX - rect.left, py: e.clientY - rect.top };
+}
+
+function tileFromEvent(e) {
+  const { px, py } = pixelFromEvent(e);
   const { wx, wy } = screenToWorld(px, py);
   const t = screenToTile(wx, wy);
   const tc = Math.round(t.col);
@@ -826,13 +830,22 @@ canvas.addEventListener('pointerdown', (e) => {
   if (!tile) return;
   _downAt = Date.now();
   _downTile = tile;
+  _downPixel = pixelFromEvent(e);
   _dragging = false;
 
-  // Move-mode pickup begins immediately on pointerdown
+  // Move-mode pickup begins immediately on pointerdown — pixel-perfect
+  // hit test picks up whichever piece the user actually touched.
   if (window.editor?.state.active && window.editor.state.mode === 'move') {
-    if (window.editor.onDragStart(tile.col, tile.row)) {
-      _dragging = true;
-      canvas.setPointerCapture(e.pointerId);
+    const hit = (typeof furnitureAtPixel === 'function')
+      ? furnitureAtPixel(_downPixel.px, _downPixel.py)
+      : null;
+    if (hit) {
+      if (window.editor.onDragStartAtIndex
+            ? window.editor.onDragStartAtIndex(hit.index, hit.item.col, hit.item.row)
+            : window.editor.onDragStart(hit.item.col, hit.item.row)) {
+        _dragging = true;
+        canvas.setPointerCapture(e.pointerId);
+      }
     }
   }
 });
@@ -856,9 +869,15 @@ canvas.addEventListener('pointerup', (e) => {
     return;
   }
 
-  // Editor intercepts taps (place / rotate / delete)
+  // Editor intercepts taps (place / select / rotate / delete).
+  // Pass both the tile (for placement target) and pixel hit (for picking
+  // a placed piece by its sprite, not by the tile beneath it).
   if (window.editor && window.editor.state.active) {
-    window.editor.onTileClick(tile.col, tile.row, dur);
+    const pix = pixelFromEvent(e);
+    const hit = (typeof furnitureAtPixel === 'function')
+      ? furnitureAtPixel(pix.px, pix.py)
+      : null;
+    window.editor.onTileClick(tile.col, tile.row, dur, hit);
     return;
   }
   // Walk the avatar — route around furniture via BFS pathfinding so

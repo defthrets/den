@@ -167,6 +167,77 @@ function furnitureAtTile(col, row) {
   return null;
 }
 
+// Pixel-perfect hit test against the rendered sprite. Returns the topmost
+// furniture whose actual painted pixels (alpha > threshold) overlap the
+// screen point — so clicks on transparent areas of a sprite fall through
+// to whatever's behind it, and clicks on visible pixels select that piece
+// regardless of which tile its anchor sits on.
+const _spriteAlphaCache = {};
+function _spriteAlpha(id) {
+  if (_spriteAlphaCache[id]) return _spriteAlphaCache[id];
+  const img = loadFurnitureSprite(id);
+  if (!img.complete || img.naturalWidth === 0) return null;
+  const off = document.createElement('canvas');
+  off.width = img.naturalWidth;
+  off.height = img.naturalHeight;
+  const octx = off.getContext('2d', { willReadFrequently: true });
+  octx.imageSmoothingEnabled = false;
+  octx.drawImage(img, 0, 0);
+  const data = octx.getImageData(0, 0, off.width, off.height).data;
+  return _spriteAlphaCache[id] = { w: off.width, h: off.height, data };
+}
+
+function furnitureAtPixel(px, py) {
+  // Build a draw-order list (back-to-front) using the same priority math as
+  // the render loop, then iterate FRONT-to-back so the topmost sprite under
+  // the cursor wins.
+  const order = [];
+  for (let i = 0; i < ROOM_FURNITURE.length; i++) {
+    const f = ROOM_FURNITURE[i];
+    const m = FURNITURE_BY_ID[f.id] || { footprint: [1,1] };
+    const [fw, fh] = m.footprint || [1, 1];
+    const isFloor = m.layer === 'floor';
+    const base = isFloor ? 500 : 1000;
+    const offset = isFloor ? 0 : 2;
+    // Use the rear tile of the footprint for depth, matching the renderer
+    const depth = base + tileDepth(f.col + fw - 1, f.row + fh - 1) + offset;
+    order.push({ i, depth });
+  }
+  order.sort((a, b) => b.depth - a.depth);  // front-to-back
+
+  for (const { i } of order) {
+    const item = ROOM_FURNITURE[i];
+    const meta = FURNITURE_BY_ID[item.id] || { scale: 1.0, footprint: [1,1] };
+    const itemScale = FURNITURE_BASE_SCALE * (meta.scale ?? 1.0);
+    const c = footprintCenter(item);
+    const { sx, sy } = worldToScreen(c.x, c.y);
+    const screenScale = zoom * itemScale;
+    const w = FURNITURE_FRAME_W * screenScale;
+    const h = FURNITURE_FRAME_H * screenScale;
+    const padBelowBase = (1 - FURNITURE_BASE_Y) * h;
+    const fwd = (meta.offsetForward ?? 0);
+    const offX = (meta.offsetX ?? fwd) * screenScale;
+    const offY = (meta.offsetY ?? fwd * 0.5) * screenScale;
+    const dx = sx - w / 2 + offX;
+    const dy = sy - h + padBelowBase + offY;
+
+    // Quick AABB cull
+    if (px < dx || px > dx + w || py < dy || py > dy + h) continue;
+
+    // Sample the source-pixel alpha. Handle horizontal flip for rotated items.
+    let srcX = (px - dx) / screenScale;
+    let srcY = (py - dy) / screenScale;
+    if (item.rotated) srcX = FURNITURE_FRAME_W - 1 - srcX;
+    const ax = Math.floor(srcX), ay = Math.floor(srcY);
+    const buf = _spriteAlpha(item.id);
+    if (!buf) continue;
+    if (ax < 0 || ay < 0 || ax >= buf.w || ay >= buf.h) continue;
+    const a = buf.data[(ay * buf.w + ax) * 4 + 3];
+    if (a > 8) return { item, index: i };
+  }
+  return null;
+}
+
 // True if (col, row) is blocked for avatar movement. Floor-layer items
 // like rugs are walkable; everything else is solid.
 function isTileBlocked(col, row) {

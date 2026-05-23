@@ -218,10 +218,15 @@
   });
 
   // ── Tile click logic ───────────────────────────────────────────────
-  function onTileClick(col, row, durationMs) {
+  // `pixelHit` is the optional pixel-perfect hit (sprite-level), passed
+  // in by the renderer. If a click lands on visible pixels of a sprite,
+  // we treat THAT piece as the target — regardless of which tile the
+  // anchor sits on. Falling back to tile-based hit-test only when the
+  // click missed every sprite.
+  function onTileClick(col, row, durationMs, pixelHit) {
     if (!state.active) return false;
 
-    const existing = furnitureAtTile(col, row);
+    const existing = pixelHit || furnitureAtTile(col, row);
 
     // ─── MOVE mode ───────────────────────────────────────────────
     if (state.mode === 'move') {
@@ -353,6 +358,18 @@
     syncHeader();
     return true;
   }
+  // Renderer can call this when it's already done a pixel-perfect hit
+  // test and knows the exact piece the user grabbed.
+  function onDragStartAtIndex(index, col, row) {
+    if (!state.active || state.mode !== 'move') return false;
+    if (index < 0 || index >= ROOM_FURNITURE.length) return false;
+    state.pickedUpIndex = index;
+    state.dragCol = col;
+    state.dragRow = row;
+    document.body.classList.add('editor-picked-up');
+    syncHeader();
+    return true;
+  }
   function onDragMove(col, row) {
     if (state.pickedUpIndex < 0) return false;
     state.dragCol = col;
@@ -385,5 +402,9 @@
     syncHeader();
   }
 
-  window.editor = { state, onTileClick, onDragStart, onDragMove, onDragEnd, cancelDrag };
+  window.editor = {
+    state, onTileClick,
+    onDragStart, onDragStartAtIndex,
+    onDragMove, onDragEnd, cancelDrag,
+  };
 })();
