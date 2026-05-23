@@ -323,14 +323,32 @@ function wallPatternFor(styleId) {
   return _wallPatternCache[key] = ctx.createPattern(tex, 'repeat');
 }
 
+// Integer-pixel screen position of a tile's NORTH corner. Snapping the
+// half-tile step to integers means adjacent tiles always sit on a
+// consistent pixel grid — fixes the seam jitter you get when
+// TILE_W_HALF * zoom is fractional (e.g. 32 * 2/3 = 21.33).
+function tileToScreenIntPx(col, row) {
+  const dxHalf = Math.round(TILE_W_HALF * zoom);
+  const dyHalf = Math.round(TILE_H_HALF * zoom);
+  // Anchor the grid on tile (0,0)'s north corner via the regular projection
+  // so the integer-grid origin matches the canvas centre's math.
+  const origin = worldToScreen(0, -TILE_H_HALF);
+  return {
+    sx: Math.round(origin.sx + (col - row) * dxHalf),
+    sy: Math.round(origin.sy + (col + row) * dyHalf),
+  };
+}
+
 // ── Floor / walls ────────────────────────────────────────────────────────
 function drawFloorTile(col, row) {
-  const c = tileToScreen(col, row);
-  const { sx, sy } = worldToScreen(c.x, c.y - TILE_H_HALF);
+  // Snap floor tiles to an integer pixel grid so adjacent tiles tile
+  // cleanly with no fractional-spacing seams. Avatars/furniture still use
+  // the fractional projection so their motion stays smooth.
+  const intPos = tileToScreenIntPx(col, row);
+  const sx = intPos.sx, sy = intPos.sy;
   const w = TILE_W * zoom;
   const dh = TILE_H * zoom;
   const fh = FACE_H * zoom;
-  const alt = (col + row) % 2 === 0;
   const fs = (typeof currentFloorStyle === 'function') ? currentFloorStyle() : null;
 
   // PixelLab texture path: if a floor_<id>.png exists, drawImage it
@@ -338,14 +356,16 @@ function drawFloorTile(col, row) {
   if (fs) {
     const tex = loadTexture(`floor_${fs.id}`);
     if (tex.complete && tex.naturalWidth > 0) {
-      const dw = tex.naturalWidth  * zoom;
-      const dhTex = tex.naturalHeight * zoom;
+      // Texture dim in screen px — snap to integer so adjacent tiles use
+      // identical width/height.
+      const dw    = Math.round(tex.naturalWidth  * zoom);
+      const dhTex = Math.round(tex.naturalHeight * zoom);
       ctx.imageSmoothingEnabled = false;
       ctx.drawImage(
         tex,
-        Math.round(sx - FLOOR_TILE_NORTH_X * zoom),
-        Math.round(sy - FLOOR_TILE_NORTH_Y * zoom),
-        Math.round(dw), Math.round(dhTex),
+        sx - Math.round(FLOOR_TILE_NORTH_X * zoom),
+        sy - Math.round(FLOOR_TILE_NORTH_Y * zoom),
+        dw, dhTex,
       );
       return;
     }
@@ -356,9 +376,10 @@ function drawFloorTile(col, row) {
   const leftFace = fs ? fs.leftFace : PAL.floorLeftFace;
   const rightFace = fs ? fs.rightFace : PAL.floorRightFace;
   const outline = fs ? fs.outline : PAL.floorOutline;
+  const alt = (col + row) % 2 === 0;
 
   ctx.save();
-  ctx.translate(sx - w / 2, sy);
+  ctx.translate(Math.round(sx - w / 2), sy);
 
   ctx.beginPath();
   ctx.moveTo(w / 2, 0);
