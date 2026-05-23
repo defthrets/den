@@ -950,16 +950,29 @@ input.addEventListener('focus', openKeyboard);
 input.addEventListener('blur',  closeKeyboard);
 // Hint the OS keyboard to show a "send" enter key.
 input.setAttribute('enterkeyhint', 'send');
-// On mobile, keep the input bar visible above the OS keyboard via
-// VisualViewport — fall back to default position if unsupported.
+// On mobile, lift the input bar above the OS keyboard. The layout
+// viewport stays the same height when iOS opens the keyboard, so we
+// track the visual viewport's height + offset and translate the bar up
+// by the missing pixels. Using transform instead of `bottom` so the
+// CSS `bottom: 0` rule still anchors it normally when no keyboard.
 if (isTouchDevice && window.visualViewport) {
   const vv = window.visualViewport;
   const sync = () => {
-    const offset = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
-    inputBar.style.bottom = offset + 'px';
+    const lift = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+    inputBar.style.transform = `translateY(${-lift}px)`;
   };
   vv.addEventListener('resize', sync);
   vv.addEventListener('scroll', sync);
+  // iOS sometimes fires the visualViewport resize after focus by 150-300ms;
+  // run sync on focus too so the bar lifts immediately when known.
+  input.addEventListener('focus', () => {
+    sync();
+    setTimeout(sync, 100);
+    setTimeout(sync, 350);
+  });
+  input.addEventListener('blur', () => {
+    inputBar.style.transform = '';
+  });
   sync();
 }
 
