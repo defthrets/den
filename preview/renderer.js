@@ -196,6 +196,8 @@ function makeAvatar(userId, col, row, isMe, cfg) {
     walkFrame: 0,
     walkFrameTimer: 0,
     pathQueue: [],
+    sittingOn: null,
+    sittingIntent: null,
   };
   a.sprite = new Image();
   a.sprite.src = `sprites/${cfg.preset}.png?v=${SPRITE_VERSION}`;
@@ -207,11 +209,16 @@ function makeAvatar(userId, col, row, isMe, cfg) {
 // at least one of the two adjacent cardinal tiles is also walkable —
 // prevents the avatar from squeezing diagonally between two corners of
 // solid furniture. Returns step tiles after the start, or null.
-function findPath(sc, sr, tc, tr) {
+//
+// opts.allowBlockedDest: lets the FINAL tile be solid (used when the
+// player is walking to sit on a chair/couch — they want to land on the
+// blocked tile itself, not next to it).
+function findPath(sc, sr, tc, tr, opts) {
+  opts = opts || {};
   if (sc === tc && sr === tr) return [];
   const blocked = (c, r) =>
     typeof isTileBlocked === 'function' && isTileBlocked(c, r);
-  if (blocked(tc, tr)) return null;
+  if (!opts.allowBlockedDest && blocked(tc, tr)) return null;
   const key = (c, r) => r * ROOM_COLS + c;
   const visited = new Set([key(sc, sr)]);
   const prev = new Map();
@@ -228,7 +235,10 @@ function findPath(sc, sr, tc, tr) {
       if (nc < 0 || nc >= ROOM_COLS || nr < 0 || nr >= ROOM_ROWS) continue;
       const k = key(nc, nr);
       if (visited.has(k)) continue;
-      if (blocked(nc, nr)) continue;
+      const isDest = (nc === tc && nr === tr);
+      // Skip solid tiles unless we're landing on the destination AND
+      // the caller explicitly allows a blocked destination.
+      if (blocked(nc, nr) && !(opts.allowBlockedDest && isDest)) continue;
       // Diagonal corner-cut protection: require at least one orthogonal
       // neighbour walkable so we don't slip between two diagonal blockers.
       if (dc !== 0 && dr !== 0) {
@@ -562,26 +572,31 @@ function drawAvatar(a) {
   ctx.ellipse(sx, sy, 9 * scale, 2.6 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Idle bob
+  // Idle bob — also stops when sitting (you don't bob on a chair).
   const bob = a.state === 'idle' ? Math.sin(a.bob) * 0.5 * scale : 0;
 
   // Col = walk frame, row = facing direction.
   const frameCol = a.state === 'walking' ? a.walkFrame : 0;
   const frameRow = a.direction;
 
+  // Sitting pose: raise the sprite so the feet land on the cushion of
+  // the chair/couch instead of the floor. 16 source-px is roughly the
+  // height of the seat above the tile centre at our sprite proportions.
+  const sitLift = (a.state === 'sitting') ? 16 * scale : 0;
+
   ctx.imageSmoothingEnabled = false;
   ctx.drawImage(
     a.sprite,
     frameCol * FRAME_W, frameRow * FRAME_H, FRAME_W, FRAME_H,
     Math.round(sx - w / 2),
-    Math.round(sy - h + padBelowFeet + bob),
+    Math.round(sy - h + padBelowFeet + bob - sitLift),
     Math.round(w), Math.round(h),
   );
 
-  // Username dot above head — head top is at (sy - h + padBelowFeet) ish
+  // Username dot above head — also lifted while sitting.
   ctx.fillStyle = a.isMe ? PAL.accent : PAL.friendDot;
   ctx.beginPath();
-  ctx.arc(sx, sy - h + padBelowFeet + bob - 5, 3 * Math.max(1, zoom), 0, Math.PI * 2);
+  ctx.arc(sx, sy - h + padBelowFeet + bob - 5 - sitLift, 3 * Math.max(1, zoom), 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -732,17 +747,37 @@ function frame(dtMs) {
       if (a.walkT >= 1) {
         a.col = a.target.col; a.row = a.target.row;
         a.target = null; a.walkT = 0;
-        // Pop the next queued step (skip any that became blocked since being queued).
+        // Pop the next queued step (skip any that became blocked since
+        // being queued — UNLESS it's the final step and we have a
+        // sitting intent armed for that tile).
         while (a.pathQueue && a.pathQueue.length) {
           const next = a.pathQueue.shift();
           if (next.col === a.col && next.row === a.row) continue;
-          if (typeof isTileBlocked === 'function' && isTileBlocked(next.col, next.row)) continue;
+          const isFinal = a.pathQueue.length === 0;
+          const sitDest = a.sittingIntent
+            && next.col === a.sittingIntent.col
+            && next.row === a.sittingIntent.row
+            && isFinal;
+          if (typeof isTileBlocked === 'function'
+              && isTileBlocked(next.col, next.row)
+              && !sitDest) continue;
           a.target = next;
           break;
         }
         if (!a.target) {
-          a.state = 'idle';
-          a.walkFrame = 0; a.walkFrameTimer = 0;
+          // Either we hit the seat tile or just stopped walking.
+          if (a.sittingIntent
+              && a.col === a.sittingIntent.col
+              && a.row === a.sittingIntent.row) {
+            a.state = 'sitting';
+            a.sittingOn = a.sittingIntent.furnitureIndex;
+            a.direction = DIR_S;
+            a.walkFrame = 0;
+          } else {
+            a.state = 'idle';
+            a.walkFrame = 0; a.walkFrameTimer = 0;
+          }
+          a.sittingIntent = null;
         }
       }
     }
@@ -896,15 +931,54 @@ canvas.addEventListener('pointerup', (e) => {
     window.editor.onTileClick(tile.col, tile.row, dur, hit);
     return;
   }
-  // Walk the avatar — route around furniture via BFS pathfinding so
-  // solid pieces actually block movement instead of being walked through.
-  if (typeof isTileBlocked === 'function' && isTileBlocked(tile.col, tile.row)) return;
+  // Walk the avatar — but first, check if the user tapped a SITTABLE
+  // furniture piece. If so, path to its seat tile (which is normally
+  // blocked) and arm the sitting intent so we transition to the seated
+  // pose on arrival.
+  let sitTarget = null;
+  if (typeof furnitureAtPixel === 'function') {
+    const pix2 = pixelFromEvent(e);
+    const hit2 = furnitureAtPixel(pix2.px, pix2.py);
+    if (hit2) {
+      const meta = FURNITURE_BY_ID[hit2.item.id];
+      if (meta && meta.sittable) {
+        const [sdx, sdy] = meta.seatTile || [0, 0];
+        sitTarget = { col: hit2.item.col + sdx, row: hit2.item.row + sdy,
+                      furnitureIndex: hit2.index };
+      }
+    }
+  }
+  // If not sitting and the destination tile is blocked, ignore the click.
+  if (!sitTarget &&
+      typeof isTileBlocked === 'function' && isTileBlocked(tile.col, tile.row)) {
+    return;
+  }
+  // Tapping somewhere ELSE while seated stands you up.
+  if (!sitTarget && me.sittingOn != null) {
+    me.sittingOn = null;
+    me.state = 'idle';
+  }
   // Compute path from where the avatar will END UP after the current
   // step (= me.target if walking, else its current tile).
   const fromCol = (me.state === 'walking' && me.target) ? me.target.col : me.col;
   const fromRow = (me.state === 'walking' && me.target) ? me.target.row : me.row;
-  const path = findPath(fromCol, fromRow, tile.col, tile.row);
-  if (!path || path.length === 0) return;
+  const destCol = sitTarget ? sitTarget.col : tile.col;
+  const destRow = sitTarget ? sitTarget.row : tile.row;
+  const path = findPath(fromCol, fromRow, destCol, destRow,
+                         sitTarget ? { allowBlockedDest: true } : undefined);
+  if (!path || path.length === 0) {
+    // Already on the seat tile → sit immediately.
+    if (sitTarget && me.col === destCol && me.row === destRow) {
+      me.sittingOn = sitTarget.furnitureIndex;
+      me.state = 'sitting';
+      me.direction = DIR_S;
+      me.walkFrame = 0;
+    }
+    return;
+  }
+  // Pass the sitting intent through to the walk-step loop so the final
+  // blocked tile is accepted instead of skipped.
+  me.sittingIntent = sitTarget;
   // Replace any previously-queued steps with the new path. Current step
   // (if any) finishes first; subsequent steps come from the new path.
   me.pathQueue.length = 0;

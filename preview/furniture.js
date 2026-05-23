@@ -35,12 +35,15 @@ const FURNITURE_CATALOG = [
   // ── Seating
   // Hard rule: footprint = tiles the sprite visually occupies. Couches
   // are 3-tile pieces; armchair-style sofas/chairs are 1-tile.
-  { id: 'chair_wood',     name: 'Wooden chair', category: 'seating',  scale: 1.5, footprint: [1, 1] },
-  { id: 'sofa_red',       name: 'Red sofa',     category: 'seating',  scale: 1.5, footprint: [3, 1] },
-  { id: 'couch_dirty_v1', name: 'Dirty couch 1',category: 'seating',  scale: 1.5, footprint: [3, 1], offsetForward: 10 },
-  { id: 'couch_dirty_v2', name: 'Dirty couch 2',category: 'seating',  scale: 1.5, footprint: [3, 1], offsetForward: 10 },
-  { id: 'couch_dirty_v3', name: 'Dirty couch 3',category: 'seating',  scale: 1.5, footprint: [3, 1], offsetForward: 10 },
-  { id: 'couch_dirty_v4', name: 'Dirty couch 4',category: 'seating',  scale: 1.5, footprint: [3, 1], offsetForward: 10 },
+  // `sittable` marks pieces a tap can route to + sit on. `seatTile` is
+  // the (dx, dy) within the footprint where the avatar lands (middle of
+  // a 3-tile couch = 1, 0).
+  { id: 'chair_wood',     name: 'Wooden chair', category: 'seating',  scale: 1.5, footprint: [1, 1], sittable: true, seatTile: [0, 0] },
+  { id: 'sofa_red',       name: 'Red sofa',     category: 'seating',  scale: 1.5, footprint: [3, 1], sittable: true, seatTile: [1, 0] },
+  { id: 'couch_dirty_v1', name: 'Dirty couch 1',category: 'seating',  scale: 1.5, footprint: [3, 1], offsetForward: 10, sittable: true, seatTile: [1, 0] },
+  { id: 'couch_dirty_v2', name: 'Dirty couch 2',category: 'seating',  scale: 1.5, footprint: [3, 1], offsetForward: 10, sittable: true, seatTile: [1, 0] },
+  { id: 'couch_dirty_v3', name: 'Dirty couch 3',category: 'seating',  scale: 1.5, footprint: [3, 1], offsetForward: 10, sittable: true, seatTile: [1, 0] },
+  { id: 'couch_dirty_v4', name: 'Dirty couch 4',category: 'seating',  scale: 1.5, footprint: [3, 1], offsetForward: 10, sittable: true, seatTile: [1, 0] },
   // ── Surfaces
   { id: 'bed_blue',    name: 'Blue bed',     category: 'surfaces',    scale: 1.5, footprint: [3, 1] },
   { id: 'table_round', name: 'Round table',  category: 'surfaces',    scale: 1.5, footprint: [1, 1] },
