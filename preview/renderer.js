@@ -30,8 +30,8 @@ const WALK_FRAME_DURATION = 0.09;  // walk-cycle frame duration (was 0.14)
 // settle line → hold briefly → pop (fade + small scale up). The rise is
 // intentionally long so the eye can follow the message drifting upward.
 const BUBBLE_TARGET_Y = 110;         // settle line, CSS px from top — sits just below the topbar.
-const BUBBLE_RISE_TIME = 3.0;        // seconds to drift up to target (slow, smooth)
-const BUBBLE_HOLD_TIME = 1.0;        // seconds parked at target after arrival
+const BUBBLE_RISE_TIME = 5.5;        // seconds to drift up to target (very slow, smooth)
+const BUBBLE_HOLD_TIME = 1.2;        // seconds parked at target after arrival
 const BUBBLE_FADE_TIME = 0.6;        // fade + pop duration
 const BUBBLE_LIFETIME = BUBBLE_RISE_TIME + BUBBLE_HOLD_TIME + BUBBLE_FADE_TIME;
 // Throttle: minimum gap (seconds) between consecutive bubbles from the
