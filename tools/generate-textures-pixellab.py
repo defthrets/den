@@ -76,13 +76,20 @@ UI_ICONS = [
 UI_PANELS = [
     # 64x32 chunky button skins. Bevel + highlight + shadow baked in so
     # we can drop our CSS rectangle borders.
-    ("ui_btn_amber", 64, 32, "pixel art chunky game button face, warm amber orange with dark outline, glossy bevelled top highlight, soft inner shadow, classic Habbo Hotel UI style"),
-    ("ui_btn_dark",  64, 32, "pixel art chunky game button face, dark slate grey with white outline, subtle bevelled top highlight, classic Habbo Hotel UI style"),
-    # 96x96 ornate header / panel frame artwork. Centre stays usable for
-    # text on top; corners + edges have brass / wood pixel detail.
+    ("ui_btn_amber",         64, 32, "pixel art chunky game button face, warm amber orange with dark outline, glossy bevelled top highlight, soft inner shadow, classic Habbo Hotel UI style"),
+    ("ui_btn_amber_hover",   64, 32, "pixel art chunky game button face, BRIGHT golden yellow with dark outline, glossy bevelled top highlight, hover state, classic Habbo Hotel UI style"),
+    ("ui_btn_amber_active",  64, 32, "pixel art chunky rectangular button skin, BLANK darker burnt orange recessed inset, dark outline, no text no letters no symbols, retro game UI"),
+    ("ui_btn_dark",          64, 32, "pixel art chunky game button face, dark slate grey with white outline, subtle bevelled top highlight, classic Habbo Hotel UI style"),
+    ("ui_btn_dark_hover",    64, 32, "pixel art chunky game button face, medium slate grey with white outline, brighter bevelled top highlight, hover state, classic Habbo Hotel UI style"),
+    ("ui_btn_dark_active",   64, 32, "pixel art chunky rectangular button skin, BLANK very dark grey recessed inset, white outline, no text no letters no symbols, retro game UI"),
+    # 192x48 ornate header banner used by the room chip
     ("ui_panel_top", 192, 48, "pixel art game UI horizontal banner, dark wood with brass corner studs, ornate scroll edges, empty middle for label, classic Habbo Hotel dialog style"),
-    # 128x40 input-field skin — wood frame for the chat input bar
+    # 128x40 input-field skin
     ("ui_input_bg",  128, 40, "pixel art game UI long input slot, dark inset trough with thin gold border, classic JRPG message field, empty middle"),
+    # 192x192 ornate framed panel — used as a 9-slice border-image around
+    # the editor panel + customiser modal. Brass corner studs, dark wood
+    # border, neutral dark fill in the middle that text will sit over.
+    ("ui_panel_frame", 192, 192, "pixel art game UI panel frame, square dark wood border with large brass corner studs at all four corners, decorative gold inner trim, dark navy interior fill, classic JRPG / Habbo Hotel dialog window, symmetrical and clean"),
 ]
 
 # Wall patterns — seamless square that we tile across the wall quad.
