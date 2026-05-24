@@ -615,8 +615,21 @@ function drawAvatar(a) {
   ctx.ellipse(sx, sy, 9 * scale, 2.6 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Idle bob — also stops when sitting (you don't bob on a chair).
-  const bob = a.state === 'idle' ? Math.sin(a.bob) * 0.5 * scale : 0;
+  // Bob:
+  //   idle    → soft breathing bob (~0.5 px)
+  //   walking → step bob (~2 px), lifts on each footfall so the motion
+  //             reads even when the PixelLab south/north walk frames
+  //             have barely any visible leg movement
+  //   sitting → no bob (you don't bob on a chair)
+  let bob = 0;
+  if (a.state === 'idle') {
+    bob = Math.sin(a.bob) * 0.5 * scale;
+  } else if (a.state === 'walking') {
+    // |sin| over the walk cycle = a bump per foot strike; two bumps
+    // per full 6-frame cycle so the rhythm matches actual stepping.
+    const phase = (a.walkFrame / WALK_FRAMES) * Math.PI * 2;
+    bob = -Math.abs(Math.sin(phase)) * 2 * scale;
+  }
 
   // Col = walk frame, row = facing direction.
   const frameCol = a.state === 'walking' ? a.walkFrame : 0;
