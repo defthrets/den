@@ -93,6 +93,26 @@ PRESETS = [
       "description": GIRL_BASE + ", blonde ponytail, white blouse with collar, navy skirt, brown loafers" },
     { "id": "floral_girl",      "seed": 823, "detail": "high",
       "description": GIRL_BASE + ", long brown hair, pink floral pattern dress, white sneakers" },
+
+    # ── More boy outfits (style packs)
+    { "id": "eshay_boy",        "seed": 830, "detail": "high",
+      "description": BOY_BASE + ", short brown hair under a black bucket hat, white striped polo shirt, black tracksuit pants with side stripes, white TN sneakers" },
+    { "id": "gym_bro",          "seed": 831, "detail": "high",
+      "description": BOY_BASE + ", short brown hair, white tank top muscle shirt, black gym shorts, white sneakers, slightly broader shoulders" },
+    { "id": "suit_boy",         "seed": 832, "detail": "high",
+      "description": BOY_BASE + ", short neat brown hair, charcoal grey business suit jacket over white dress shirt with red tie, matching grey suit trousers, polished black dress shoes" },
+    { "id": "skater_boy",       "seed": 833, "detail": "high",
+      "description": BOY_BASE + ", messy brown hair under a black beanie, oversized graphic t-shirt, baggy ripped jeans, black skate shoes" },
+
+    # ── More girl outfits (style packs)
+    { "id": "club_girl",        "seed": 834, "detail": "high",
+      "description": GIRL_BASE + ", long straight black hair, tight short black dress, black high heels, going-out clubwear style" },
+    { "id": "suit_girl",        "seed": 835, "detail": "high",
+      "description": GIRL_BASE + ", neat blonde bob hair, charcoal grey blazer over white blouse, matching grey pencil skirt, black heels, business attire" },
+    { "id": "gym_girl",         "seed": 836, "detail": "high",
+      "description": GIRL_BASE + ", brown ponytail, fitted pink sports bra, black yoga leggings, white running shoes, athletic gymwear style" },
+    { "id": "cocktail_girl",    "seed": 837, "detail": "high",
+      "description": GIRL_BASE + ", long wavy brown hair, elegant red cocktail dress with thin straps, red high heels, formal evening style" },
 ]
 
 def api_post(path: str, body: dict) -> dict:

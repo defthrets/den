@@ -53,9 +53,11 @@ PRESETS = [
     # Boys
     "casual_blue_boy", "punk_red_boy", "preppy_boy",
     "nerd_kid", "athlete_boy", "hoodie_boy",
+    "eshay_boy", "gym_bro", "suit_boy", "skater_boy",
     # Girls
     "casual_blue_girl", "blonde_yellow_girl", "goth_girl",
     "punk_girl", "preppy_girl", "floral_girl",
+    "club_girl", "suit_girl", "gym_girl", "cocktail_girl",
 ]
 
 def slice_one(src_path: Path, part: str, y0: int, y1: int) -> Image.Image:
