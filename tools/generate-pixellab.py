@@ -162,6 +162,8 @@ def animate_character(char_id: str, seed: int) -> list[Image.Image]:
         "animation_name": "walk",
         "action_description": "walking forward, knees bending, legs swinging alternately, arms swinging at sides, weight shifting side to side",
         "mode": "v3",
+        "directions": ["south", "east", "north", "west"],
+        "frame_count": 6,
         "seed": seed,
     })
     job_ids = r["background_job_ids"]

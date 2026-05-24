@@ -615,18 +615,12 @@ function drawAvatar(a) {
   ctx.ellipse(sx, sy, 9 * scale, 2.6 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // South walks are problematic — PixelLab flips late frames into
-  // back-facing on some presets. Only the first 3 frames are reliably
-  // forward-facing. Sequence those 3 frames in a 4-step pattern:
-  //   rest → left step → rest → right step → repeat
-  // That gives the proper "step-pause-step-pause" walking feel without
-  // ever landing on the glitched frames.
-  const SOUTH_SEQ = [0, 1, 0, 2];
-  const directionFrames = (a.direction === DIR_S) ? SOUTH_SEQ.length : WALK_FRAMES;
-  const rawFrame = a.walkFrame % directionFrames;
-  const frameCol = a.state === 'walking'
-    ? (a.direction === DIR_S ? SOUTH_SEQ[rawFrame] : rawFrame)
-    : 0;
+  // V3 walk animations: south frames 0-3 show clear leg swing; frames
+  // 4-5 sometimes show a face-expression change (open mouth) that
+  // breaks immersion. Clamp south to the first 4 clean frames. East /
+  // North / West get the full 6.
+  const directionFrames = (a.direction === DIR_S) ? 4 : WALK_FRAMES;
+  const frameCol = a.state === 'walking' ? (a.walkFrame % directionFrames) : 0;
   const frameRow = a.direction;
 
   // Bob: idle = soft breathing only. Walking lets the sprite-level leg
