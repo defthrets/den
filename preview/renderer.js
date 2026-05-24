@@ -615,35 +615,9 @@ function drawAvatar(a) {
   ctx.ellipse(sx, sy, 9 * scale, 2.6 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Bob + sway:
-  //   idle    → soft breathing bob (~0.5 px)
-  //   walking → step bob (~2 px lift on each footfall) + small horizontal
-  //             sway (±1 px) during south/north walks where the underlying
-  //             PixelLab frames don't move much. Together the motion sells
-  //             walking even though the leg cycle is only 3 frames.
-  //   sitting → no bob (you don't bob on a chair)
-  let bob = 0;
-  let sway = 0;
-  if (a.state === 'idle') {
-    bob = Math.sin(a.bob) * 0.5 * scale;
-  } else if (a.state === 'walking') {
-    // Tie animation to a single phase derived from walkFrame so the bob
-    // and the leg-frame swap line up: bob peaks when a foot lifts.
-    const cycle = directionFrames;             // 3 for south, 6 elsewhere
-    const phase = (a.walkFrame / cycle) * Math.PI * 2;
-    bob = -Math.abs(Math.sin(phase)) * 2 * scale;
-    // Horizontal sway: only on south + north where PixelLab can't show
-    // the side-step motion. East/West rows have proper leg animation.
-    if (a.direction === DIR_S || a.direction === DIR_N) {
-      sway = Math.sin(phase) * 1 * scale;
-    }
-  }
-
-  // Col = walk frame, row = facing direction.
   // South walks are problematic — PixelLab flips late frames into
   // back-facing on some presets. Only the first 3 frames are reliably
-  // forward-facing. To get a clean walking-rhythm cadence comparable to
-  // the 6-frame north walk, sequence those 3 frames in a 4-step pattern:
+  // forward-facing. Sequence those 3 frames in a 4-step pattern:
   //   rest → left step → rest → right step → repeat
   // That gives the proper "step-pause-step-pause" walking feel without
   // ever landing on the glitched frames.
@@ -655,13 +629,31 @@ function drawAvatar(a) {
     : 0;
   const frameRow = a.direction;
 
+  // Bob + sway:
+  //   idle    → soft breathing bob (~0.5 px)
+  //   walking → step bob (~2 px lift on each footfall) + small horizontal
+  //             sway (±1 px) during south/north walks where the underlying
+  //             PixelLab frames don't move much.
+  //   sitting → no bob.
+  let bob = 0;
+  let sway = 0;
+  if (a.state === 'idle') {
+    bob = Math.sin(a.bob) * 0.5 * scale;
+  } else if (a.state === 'walking') {
+    const phase = (a.walkFrame / directionFrames) * Math.PI * 2;
+    bob = -Math.abs(Math.sin(phase)) * 2 * scale;
+    if (a.direction === DIR_S || a.direction === DIR_N) {
+      sway = Math.sin(phase) * 1 * scale;
+    }
+  }
+
   // Sitting pose: raise the sprite so the feet land on the cushion of
   // the chair/couch instead of the floor. 16 source-px is roughly the
   // height of the seat above the tile centre at our sprite proportions.
   const sitLift = (a.state === 'sitting') ? 16 * scale : 0;
 
   ctx.imageSmoothingEnabled = false;
-  const dstX = Math.round(sx - w / 2);
+  const dstX = Math.round(sx - w / 2 + sway);
   const dstY = Math.round(sy - h + padBelowFeet + bob - sitLift);
   const dstW = Math.round(w);
   const dstH = Math.round(h);
