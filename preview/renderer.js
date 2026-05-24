@@ -632,7 +632,12 @@ function drawAvatar(a) {
   }
 
   // Col = walk frame, row = facing direction.
-  const frameCol = a.state === 'walking' ? a.walkFrame : 0;
+  // Frame cap per direction. PixelLab's south walks tend to flip a few
+  // late frames into back-facing on some presets (punk_red_boy frame 5,
+  // nerd_kid 4-5, hoodie_boy 3-5). Clamp south to a 3-frame loop so we
+  // never land on those glitched frames. North/East/West are clean.
+  const directionFrames = (a.direction === DIR_S) ? 3 : WALK_FRAMES;
+  const frameCol = a.state === 'walking' ? (a.walkFrame % directionFrames) : 0;
   const frameRow = a.direction;
 
   // Sitting pose: raise the sprite so the feet land on the cushion of
