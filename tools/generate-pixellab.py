@@ -150,14 +150,18 @@ def create_character(preset: dict) -> str:
     return char_id
 
 def animate_character(char_id: str, seed: int) -> list[Image.Image]:
-    """Run template walking animation, return composed 552x368 sheet."""
+    """Run walking animation, return composed 552x368 sheet.
+
+    Uses v3 mode (custom action_description) so we get clear leg motion in
+    every direction — the older template mode produced glitched south
+    walks where late frames flipped to back-facing.
+    """
     print(f"  - animating walk...", end="", flush=True)
     r = api_post("/animate-character", {
         "character_id": char_id,
         "animation_name": "walk",
-        "action_description": "walking",
-        "mode": "template",
-        "template_animation_id": "walk",
+        "action_description": "walking forward, knees bending, legs swinging alternately, arms swinging at sides, weight shifting side to side",
+        "mode": "v3",
         "seed": seed,
     })
     job_ids = r["background_job_ids"]

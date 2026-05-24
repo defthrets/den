@@ -629,23 +629,18 @@ function drawAvatar(a) {
     : 0;
   const frameRow = a.direction;
 
-  // Bob + sway:
-  //   idle    → soft breathing bob (~0.5 px)
-  //   walking → step bob (~2 px lift on each footfall) + small horizontal
-  //             sway (±1 px) during south/north walks where the underlying
-  //             PixelLab frames don't move much.
-  //   sitting → no bob.
+  // Bob: idle = soft breathing only. Walking lets the sprite-level leg
+  // motion do the work — we'd been over-compensating with an aggressive
+  // walk-bob that read as hopping. A tiny bob on east/west still helps
+  // them feel grounded.
   let bob = 0;
-  let sway = 0;
   if (a.state === 'idle') {
     bob = Math.sin(a.bob) * 0.5 * scale;
-  } else if (a.state === 'walking') {
+  } else if (a.state === 'walking' && (a.direction === DIR_E || a.direction === DIR_W)) {
     const phase = (a.walkFrame / directionFrames) * Math.PI * 2;
-    bob = -Math.abs(Math.sin(phase)) * 2 * scale;
-    if (a.direction === DIR_S || a.direction === DIR_N) {
-      sway = Math.sin(phase) * 1 * scale;
-    }
+    bob = -Math.abs(Math.sin(phase)) * 0.7 * scale;
   }
+  const sway = 0;
 
   // Sitting pose: raise the sprite so the feet land on the cushion of
   // the chair/couch instead of the floor. 16 source-px is roughly the
