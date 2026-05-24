@@ -1,6 +1,7 @@
-// Avatar customiser modal — simple body picker (Boy / Girl).
-// Hair / Glasses / Top / Pants / Shoes / Accessory are scaffolded as
-// "coming soon" stubs while we focus on furniture variety.
+// Avatar customiser — full preset (Body) OR mix-and-match per part
+// (Head / Torso / Legs / Shoes). Picking in a part tab updates JUST that
+// layer's preset id; Body picks all four to the same preset for a quick
+// reset.
 (() => {
   const den       = window.den;
   const modal     = document.getElementById('customiser');
@@ -16,33 +17,61 @@
   previewC.height = den.FRAME_H;
 
   const TABS = [
-    { id: 'body',      label: 'Body'                  },
-    { id: 'hair',      label: 'Hair',      stub: true },
-    { id: 'glasses',   label: 'Glasses',   stub: true },
-    { id: 'top',       label: 'Top',       stub: true },
-    { id: 'pants',     label: 'Pants',     stub: true },
-    { id: 'shoes',     label: 'Shoes',     stub: true },
-    { id: 'accessory', label: 'Accessory', stub: true },
+    { id: 'body',  label: 'Body'  },
+    { id: 'head',  label: 'Head'  },
+    { id: 'torso', label: 'Torso' },
+    { id: 'legs',  label: 'Legs'  },
+    { id: 'shoes', label: 'Shoes' },
   ];
-  let activeTab   = 'body';
-  let draftPreset = den.me.cfg.preset;
-  const spriteCache = {};
+  let activeTab = 'body';
 
-  function loadSprite(id) {
-    if (spriteCache[id]) return spriteCache[id];
+  // Draft state — what the user has tentatively picked but not saved.
+  // Always keep a `parts` object so the preview composites correctly.
+  let draft = { parts: { head: '', torso: '', legs: '', shoes: '' } };
+
+  function syncDraftFromAvatar() {
+    const cfg = den.me.cfg;
+    if (cfg.parts) {
+      draft = { parts: { ...cfg.parts } };
+    } else {
+      // Legacy single-preset → seed all four parts to that preset.
+      draft = { parts: { head: cfg.preset, torso: cfg.preset,
+                          legs: cfg.preset, shoes: cfg.preset } };
+    }
+  }
+
+  const spriteCache = {};
+  function loadSprite(name) {
+    if (spriteCache[name]) return spriteCache[name];
     const img = new Image();
-    img.src = `sprites/${id}.png?v=${den.SPRITE_VERSION ?? 1}`;
-    spriteCache[id] = img;
+    img.src = `sprites/${name}.png?v=${den.SPRITE_VERSION ?? 1}`;
+    spriteCache[name] = img;
     return img;
   }
 
+  // ── Preview render ──────────────────────────────────────────────────
+  // Always composites the four part-sheets from the current draft so the
+  // user sees the live result.
   function renderPreview() {
-    const img = loadSprite(draftPreset);
+    previewX.clearRect(0, 0, previewC.width, previewC.height);
+    const layers = ['head', 'torso', 'legs', 'shoes'];
+    const imgs = layers.map(l => loadSprite(`${l}_${draft.parts[l]}`));
     const draw = () => {
       previewX.clearRect(0, 0, previewC.width, previewC.height);
-      previewX.drawImage(img, 0, 0, den.FRAME_W, den.FRAME_H, 0, 0, previewC.width, previewC.height);
+      for (const img of imgs) {
+        if (img.complete && img.naturalWidth > 0) {
+          previewX.drawImage(img, 0, 0, den.FRAME_W, den.FRAME_H,
+                                  0, 0, previewC.width, previewC.height);
+        }
+      }
     };
-    if (img.complete) draw(); else { img.onload = draw; img.onerror = draw; }
+    let remaining = imgs.length;
+    const ready = () => { if (--remaining <= 0) draw(); };
+    for (const img of imgs) {
+      if (img.complete) ready();
+      else { img.onload = ready; img.onerror = ready; }
+    }
+    draw();  // also paint whatever's already cached
   }
 
   function renderTabs() {
@@ -62,17 +91,14 @@
 
   function renderContent() {
     content.innerHTML = '';
-    if (activeTab === 'body') {
-      renderBodyPicker();
-    } else {
-      renderStub(TABS.find(t => t.id === activeTab));
-    }
+    if (activeTab === 'body') renderBodyPicker();
+    else renderPartPicker(activeTab);
   }
 
   function renderBodyPicker() {
     const label = document.createElement('div');
     label.className = 'cust-section-label';
-    label.textContent = 'BODY';
+    label.textContent = 'PICK A FULL SET';
     content.appendChild(label);
 
     const row = document.createElement('div');
@@ -80,17 +106,36 @@
     row.style.gap = '12px';
     content.appendChild(row);
 
-    for (const p of den.presets) row.appendChild(makeBodyChip(p));
+    for (const p of den.presets) row.appendChild(makeFullChip(p));
+
+    const hint = document.createElement('div');
+    hint.style.cssText = 'margin-top:14px; color:var(--text-muted); font-size:11px; line-height:1.4;';
+    hint.textContent = 'Or pick parts independently from the Head / Torso / Legs / Shoes tabs.';
+    content.appendChild(hint);
   }
 
-  function makeBodyChip(preset) {
-    const active = preset.id === draftPreset;
+  function renderPartPicker(layer) {
+    const label = document.createElement('div');
+    label.className = 'cust-section-label';
+    label.textContent = layer.toUpperCase();
+    content.appendChild(label);
+
+    const row = document.createElement('div');
+    row.className = 'styles-row';
+    row.style.gap = '12px';
+    content.appendChild(row);
+
+    for (const p of den.presets) row.appendChild(makePartChip(layer, p));
+  }
+
+  function makeFullChip(preset) {
+    const active = ['head','torso','legs','shoes']
+      .every(l => draft.parts[l] === preset.id);
     const div = document.createElement('div');
     div.className = 'style-chip' + (active ? ' active' : '');
 
     const c = document.createElement('canvas');
-    c.width = den.FRAME_W;
-    c.height = den.FRAME_H;
+    c.width = den.FRAME_W; c.height = den.FRAME_H;
     const cx = c.getContext('2d');
     cx.imageSmoothingEnabled = false;
     const img = loadSprite(preset.id);
@@ -101,33 +146,44 @@
     lbl.className = 'lbl';
     lbl.textContent = preset.name;
 
-    div.appendChild(c);
-    div.appendChild(lbl);
+    div.appendChild(c); div.appendChild(lbl);
     div.onclick = () => {
-      draftPreset = preset.id;
+      for (const l of ['head','torso','legs','shoes']) draft.parts[l] = preset.id;
       renderBodyPicker();
       renderPreview();
     };
     return div;
   }
 
-  function renderStub(tab) {
-    const wrap = document.createElement('div');
-    wrap.style.cssText = 'padding:32px 16px; text-align:center; color:var(--text-muted,#8B949E);';
-    wrap.innerHTML = `
-      <div style="font-size:14px; font-weight:600; color:var(--text,#E6EDF3); margin-bottom:6px;">
-        ${tab.label} — coming next
-      </div>
-      <div style="font-size:12px; line-height:1.55;">
-        Layered ${tab.label.toLowerCase()} overlays on top of the base sprite,<br/>
-        once we figure out the right pipeline.
-      </div>
-    `;
-    content.appendChild(wrap);
+  function makePartChip(layer, preset) {
+    const active = draft.parts[layer] === preset.id;
+    const div = document.createElement('div');
+    div.className = 'style-chip' + (active ? ' active' : '');
+
+    // Show ONLY this layer's band — easier to compare options.
+    const c = document.createElement('canvas');
+    c.width = den.FRAME_W; c.height = den.FRAME_H;
+    const cx = c.getContext('2d');
+    cx.imageSmoothingEnabled = false;
+    const img = loadSprite(`${layer}_${preset.id}`);
+    const blit = () => cx.drawImage(img, 0, 0, den.FRAME_W, den.FRAME_H, 0, 0, c.width, c.height);
+    if (img.complete) blit(); else { img.onload = blit; img.onerror = blit; }
+
+    const lbl = document.createElement('div');
+    lbl.className = 'lbl';
+    lbl.textContent = preset.name;
+
+    div.appendChild(c); div.appendChild(lbl);
+    div.onclick = () => {
+      draft.parts[layer] = preset.id;
+      renderPartPicker(layer);
+      renderPreview();
+    };
+    return div;
   }
 
   function open() {
-    draftPreset = den.me.cfg.preset;
+    syncDraftFromAvatar();
     activeTab = 'body';
     renderTabs();
     renderContent();
@@ -136,9 +192,8 @@
   }
   function close() { modal.classList.remove('open'); }
   function save() {
-    den.setPreset(den.me, draftPreset);
+    den.setParts(den.me, draft.parts);
     close();
-    // TODO: PUT /users/me/avatar with { preset: draftPreset }
   }
 
   profile.addEventListener('click', open);

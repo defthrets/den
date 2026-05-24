@@ -202,6 +202,7 @@ function makeAvatar(userId, col, row, isMe, cfg) {
     userId, col, row, isMe, cfg,
     state: 'idle', target: null, walkT: 0, bob: Math.random() * Math.PI * 2,
     sprite: null,
+    partSprites: null,   // populated when cfg.parts is set
     direction: DIR_S,
     walkFrame: 0,
     walkFrameTimer: 0,
@@ -209,9 +210,30 @@ function makeAvatar(userId, col, row, isMe, cfg) {
     sittingOn: null,
     sittingIntent: null,
   };
-  a.sprite = new Image();
-  a.sprite.src = `sprites/${cfg.preset}.png?v=${SPRITE_VERSION}`;
+  syncAvatarSprites(a);
   return a;
+}
+
+// Build a.sprite (single sheet) OR a.partSprites (4 layer sheets) based on
+// cfg. Layered cfg.parts wins; falls back to cfg.preset for the legacy
+// single-sheet path so existing call sites keep working.
+function syncAvatarSprites(a) {
+  if (a.cfg && a.cfg.parts) {
+    a.partSprites = {};
+    for (const layer of ['head', 'torso', 'legs', 'shoes']) {
+      const preset = a.cfg.parts[layer];
+      if (!preset) continue;
+      const img = new Image();
+      img.src = `sprites/${layer}_${preset}.png?v=${SPRITE_VERSION}`;
+      a.partSprites[layer] = img;
+    }
+    a.sprite = null;
+  } else {
+    a.partSprites = null;
+    const img = new Image();
+    img.src = `sprites/${a.cfg.preset}.png?v=${SPRITE_VERSION}`;
+    a.sprite = img;
+  }
 }
 
 // 8-directional BFS path from (sc, sr) to (tc, tr), avoiding any tile
@@ -567,7 +589,18 @@ function avatarWorldPos(a) {
 const FEET_ANCHOR_Y = 0.90;
 
 function drawAvatar(a) {
-  if (!a.sprite.complete || a.sprite.naturalWidth === 0) return;
+  // Layered (head/torso/legs/shoes) when cfg.parts is set, otherwise
+  // single-sheet legacy path. The layered path waits for all 4 parts to
+  // be loaded before drawing anything to avoid one-frame flicker.
+  const layered = a.partSprites && Object.keys(a.partSprites).length > 0;
+  if (layered) {
+    for (const layer of ['head', 'torso', 'legs', 'shoes']) {
+      const img = a.partSprites[layer];
+      if (!img || !img.complete || img.naturalWidth === 0) return;
+    }
+  } else if (!a.sprite || !a.sprite.complete || a.sprite.naturalWidth === 0) {
+    return;
+  }
 
   const { x: wx, y: wy } = avatarWorldPos(a);
   const { sx, sy } = worldToScreen(wx, wy);
@@ -595,13 +628,28 @@ function drawAvatar(a) {
   const sitLift = (a.state === 'sitting') ? 16 * scale : 0;
 
   ctx.imageSmoothingEnabled = false;
-  ctx.drawImage(
-    a.sprite,
-    frameCol * FRAME_W, frameRow * FRAME_H, FRAME_W, FRAME_H,
-    Math.round(sx - w / 2),
-    Math.round(sy - h + padBelowFeet + bob - sitLift),
-    Math.round(w), Math.round(h),
-  );
+  const dstX = Math.round(sx - w / 2);
+  const dstY = Math.round(sy - h + padBelowFeet + bob - sitLift);
+  const dstW = Math.round(w);
+  const dstH = Math.round(h);
+  if (layered) {
+    // All 4 layer sheets are the same dimensions and use the same
+    // (col, row) frame index, so each drawImage stamps its band into
+    // the correct slot of the composite.
+    for (const layer of ['head', 'torso', 'legs', 'shoes']) {
+      ctx.drawImage(
+        a.partSprites[layer],
+        frameCol * FRAME_W, frameRow * FRAME_H, FRAME_W, FRAME_H,
+        dstX, dstY, dstW, dstH,
+      );
+    }
+  } else {
+    ctx.drawImage(
+      a.sprite,
+      frameCol * FRAME_W, frameRow * FRAME_H, FRAME_W, FRAME_H,
+      dstX, dstY, dstW, dstH,
+    );
+  }
 
   // Username dot above head — also lifted while sitting.
   ctx.fillStyle = a.isMe ? PAL.accent : PAL.friendDot;
@@ -1136,8 +1184,14 @@ window.den = {
   FRAME_H,
   SPRITE_VERSION,
   setPreset(avatar, presetId) {
-    avatar.cfg = { ...avatar.cfg, preset: presetId };
-    avatar.sprite = new Image();
-    avatar.sprite.src = `sprites/${presetId}.png?v=${SPRITE_VERSION}`;
+    // Setting a full preset clears any layered parts so the user gets a
+    // clean single-sheet character.
+    avatar.cfg = { preset: presetId };
+    syncAvatarSprites(avatar);
+  },
+  setParts(avatar, parts) {
+    // parts = { head, torso, legs, shoes } — each is a preset id.
+    avatar.cfg = { parts: { ...parts } };
+    syncAvatarSprites(avatar);
   },
 };
