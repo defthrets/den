@@ -50,10 +50,12 @@ BANDS = {
 
 # Presets that exist as full character sheets — only these get sliced.
 PRESETS = [
-    "casual_blue_boy", "casual_blue_girl",
-    "punk_red_boy", "blonde_yellow_girl",
-    "preppy_boy", "goth_girl",
-    "athlete_boy", "nerd_kid",
+    # Boys
+    "casual_blue_boy", "punk_red_boy", "preppy_boy",
+    "nerd_kid", "athlete_boy", "hoodie_boy",
+    # Girls
+    "casual_blue_girl", "blonde_yellow_girl", "goth_girl",
+    "punk_girl", "preppy_girl", "floral_girl",
 ]
 
 def slice_one(src_path: Path, part: str, y0: int, y1: int) -> Image.Image:

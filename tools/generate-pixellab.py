@@ -49,55 +49,50 @@ PREVIEW_OUT = REPO / "preview" / "sprites"
 MOBILE_OUT.mkdir(parents=True, exist_ok=True)
 PREVIEW_OUT.mkdir(parents=True, exist_ok=True)
 
+# Locked-anatomy presets — every preset shares the same body silhouette,
+# light skin, oval head, dot eyes, neutral mouth, arms-at-sides pose. The
+# only varied elements are HAIR, SHIRT and PANTS. This is what makes the
+# slice-and-mix system actually align across presets: head ends at the
+# same Y, shoulders + neck land in the same place, shoes meet legs at the
+# same line.
+#
+# Two body archetypes:
+#   BOY  → boy proportions
+#   GIRL → girl proportions
+# Mixing parts WITHIN a body type tracks cleanly. Mixing across types
+# (boy head on girl torso) still works but the shoulder widths may differ.
+
+BOY_BASE  = "Habbo Hotel boy avatar, light peach skin, oval head, small dot eyes, tiny neutral mouth, dark eyebrow dots, slim arms at sides, standing facing forward, dark single-pixel outline, flat shading, classic Habbo pixel art style"
+GIRL_BASE = "Habbo Hotel girl avatar, light peach skin, oval head, small dot eyes, tiny neutral mouth, dark eyebrow dots, slim arms at sides, standing facing forward, dark single-pixel outline, flat shading, classic Habbo pixel art style"
+
 PRESETS = [
-    {
-        "id": "casual_blue_boy",
-        "description": "Habbo Hotel boy avatar, short brown hair, plain blue sweater, navy jeans, oval head with detailed expressive face, small dot eyes with eyebrows, tiny smile, dark outline, flat shading, classic Habbo pixel art style",
-        "seed": 800,
-        "detail": "high",
-    },
-    {
-        "id": "casual_blue_girl",
-        "description": "Habbo Hotel girl avatar, shoulder-length brown hair, plain blue jumper, navy skirt, oval head with detailed expressive face, small dot eyes with eyebrows, tiny smile, dark outline, flat shading, classic Habbo pixel art style",
-        "seed": 801,
-        "detail": "high",
-    },
-    {
-        "id": "punk_red_boy",
-        "description": "Habbo Hotel boy avatar, spiky bright red hair, black leather jacket over white shirt, ripped dark jeans, oval head with dot eyes, small frown, dark outline, flat shading, classic Habbo pixel art style",
-        "seed": 802,
-        "detail": "high",
-    },
-    {
-        "id": "blonde_yellow_girl",
-        "description": "Habbo Hotel girl avatar, long blonde hair tied with a bow, sunny yellow t-shirt, blue denim shorts, oval head with dot eyes and tiny smile, dark outline, flat shading, classic Habbo pixel art style",
-        "seed": 803,
-        "detail": "high",
-    },
-    {
-        "id": "preppy_boy",
-        "description": "Habbo Hotel boy avatar, neat blonde hair, green polo shirt with collar, khaki trousers, oval head with dot eyes and tiny smile, dark outline, flat shading, classic Habbo pixel art style",
-        "seed": 804,
-        "detail": "high",
-    },
-    {
-        "id": "goth_girl",
-        "description": "Habbo Hotel girl avatar, long black hair with side bangs, dark purple band shirt, black skirt, oval head with dot eyes and neutral mouth, dark outline, flat shading, classic Habbo pixel art style",
-        "seed": 805,
-        "detail": "high",
-    },
-    {
-        "id": "athlete_boy",
-        "description": "Habbo Hotel boy avatar, short black hair, red basketball jersey, dark grey shorts, brown skin, oval head with dot eyes and tiny smile, dark outline, flat shading, classic Habbo pixel art style",
-        "seed": 806,
-        "detail": "high",
-    },
-    {
-        "id": "nerd_kid",
-        "description": "Habbo Hotel boy avatar, neat brown hair, round glasses, light blue button-up shirt with tie, dark trousers, oval head with dot eyes behind glasses and tiny smile, dark outline, flat shading, classic Habbo pixel art style",
-        "seed": 807,
-        "detail": "high",
-    },
+    # ── Boy outfits (consistent anatomy)
+    { "id": "casual_blue_boy",  "seed": 800, "detail": "high",
+      "description": BOY_BASE + ", short brown hair, plain blue sweater, navy jeans, brown shoes" },
+    { "id": "punk_red_boy",     "seed": 802, "detail": "high",
+      "description": BOY_BASE + ", spiky bright red hair, black leather jacket over white shirt, dark jeans, black shoes" },
+    { "id": "preppy_boy",       "seed": 804, "detail": "high",
+      "description": BOY_BASE + ", neat blonde hair, green polo shirt with collar, khaki trousers, brown loafers" },
+    { "id": "nerd_kid",         "seed": 807, "detail": "high",
+      "description": BOY_BASE + ", neat brown hair, round glasses, light blue button-up shirt with dark tie, dark grey trousers, black shoes" },
+    { "id": "athlete_boy",      "seed": 806, "detail": "high",
+      "description": BOY_BASE + ", short black hair, red basketball jersey, dark grey shorts, white sneakers" },
+    { "id": "hoodie_boy",       "seed": 820, "detail": "high",
+      "description": BOY_BASE + ", messy brown hair, grey hoodie sweatshirt, faded blue jeans, white sneakers" },
+
+    # ── Girl outfits (consistent anatomy)
+    { "id": "casual_blue_girl", "seed": 801, "detail": "high",
+      "description": GIRL_BASE + ", shoulder-length brown hair, plain blue jumper, navy skirt, brown shoes" },
+    { "id": "blonde_yellow_girl","seed": 803, "detail": "high",
+      "description": GIRL_BASE + ", long blonde hair, yellow t-shirt, blue denim shorts, white sneakers" },
+    { "id": "goth_girl",        "seed": 805, "detail": "high",
+      "description": GIRL_BASE + ", long black hair with side bangs, dark purple band t-shirt, black skirt, black boots" },
+    { "id": "punk_girl",        "seed": 821, "detail": "high",
+      "description": GIRL_BASE + ", short bright pink hair, black band tank top, plaid red skirt, black boots" },
+    { "id": "preppy_girl",      "seed": 822, "detail": "high",
+      "description": GIRL_BASE + ", blonde ponytail, white blouse with collar, navy skirt, brown loafers" },
+    { "id": "floral_girl",      "seed": 823, "detail": "high",
+      "description": GIRL_BASE + ", long brown hair, pink floral pattern dress, white sneakers" },
 ]
 
 def api_post(path: str, body: dict) -> dict:

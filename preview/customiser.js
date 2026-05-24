@@ -95,37 +95,63 @@
     else renderPartPicker(activeTab);
   }
 
+  // Group presets by body type so chips are visually clustered. Mixing
+  // within a body type aligns the shoulders / hips perfectly; mixing
+  // across still works but the silhouette may shift slightly.
+  function groupByBody() {
+    const boys  = den.presets.filter(p => p.body === 'boy');
+    const girls = den.presets.filter(p => p.body === 'girl');
+    return [
+      { label: 'BOYS',  items: boys  },
+      { label: 'GIRLS', items: girls },
+    ];
+  }
+
   function renderBodyPicker() {
-    const label = document.createElement('div');
-    label.className = 'cust-section-label';
-    label.textContent = 'PICK A FULL SET';
-    content.appendChild(label);
+    const hint0 = document.createElement('div');
+    hint0.className = 'cust-section-label';
+    hint0.textContent = 'PICK A FULL SET';
+    content.appendChild(hint0);
 
-    const row = document.createElement('div');
-    row.className = 'styles-row';
-    row.style.gap = '12px';
-    content.appendChild(row);
+    for (const group of groupByBody()) {
+      const sub = document.createElement('div');
+      sub.className = 'cust-section-label';
+      sub.style.opacity = '0.7';
+      sub.textContent = group.label;
+      content.appendChild(sub);
 
-    for (const p of den.presets) row.appendChild(makeFullChip(p));
+      const row = document.createElement('div');
+      row.className = 'styles-row';
+      row.style.gap = '12px';
+      content.appendChild(row);
+      for (const p of group.items) row.appendChild(makeFullChip(p));
+    }
 
     const hint = document.createElement('div');
     hint.style.cssText = 'margin-top:14px; color:var(--text-muted); font-size:11px; line-height:1.4;';
-    hint.textContent = 'Or pick parts independently from the Head / Torso / Legs / Shoes tabs.';
+    hint.textContent = 'Or pick parts independently from the Head / Torso / Legs / Shoes tabs. Within a body type, every combo aligns cleanly.';
     content.appendChild(hint);
   }
 
   function renderPartPicker(layer) {
-    const label = document.createElement('div');
-    label.className = 'cust-section-label';
-    label.textContent = layer.toUpperCase();
-    content.appendChild(label);
+    const head = document.createElement('div');
+    head.className = 'cust-section-label';
+    head.textContent = layer.toUpperCase();
+    content.appendChild(head);
 
-    const row = document.createElement('div');
-    row.className = 'styles-row';
-    row.style.gap = '12px';
-    content.appendChild(row);
+    for (const group of groupByBody()) {
+      const sub = document.createElement('div');
+      sub.className = 'cust-section-label';
+      sub.style.opacity = '0.7';
+      sub.textContent = group.label;
+      content.appendChild(sub);
 
-    for (const p of den.presets) row.appendChild(makePartChip(layer, p));
+      const row = document.createElement('div');
+      row.className = 'styles-row';
+      row.style.gap = '12px';
+      content.appendChild(row);
+      for (const p of group.items) row.appendChild(makePartChip(layer, p));
+    }
   }
 
   function makeFullChip(preset) {

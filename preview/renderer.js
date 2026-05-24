@@ -40,7 +40,7 @@ const BUBBLE_MIN_GAP = 0.4;
 const _lastBubbleAt = {};
 
 // Bump when regenerating sprites so the browser fetches the new PNGs.
-const SPRITE_VERSION = 23;
+const SPRITE_VERSION = 24;
 
 const PAL = {
   skyTop:        '#1A2744',
@@ -1171,14 +1171,20 @@ window.den = {
   avatars,    // exposed so friends.js / public-rooms.js can add/remove NPCs
   makeAvatar, // for NPC spawning
   presets: [
+    // Boys (shared anatomy + skin)
     { id: 'casual_blue_boy',    name: 'Casual',  body: 'boy'  },
-    { id: 'casual_blue_girl',   name: 'Casual',  body: 'girl' },
     { id: 'punk_red_boy',       name: 'Punk',    body: 'boy'  },
-    { id: 'blonde_yellow_girl', name: 'Sunny',   body: 'girl' },
     { id: 'preppy_boy',         name: 'Preppy',  body: 'boy'  },
-    { id: 'goth_girl',          name: 'Goth',    body: 'girl' },
-    { id: 'athlete_boy',        name: 'Athlete', body: 'boy'  },
     { id: 'nerd_kid',           name: 'Nerd',    body: 'boy'  },
+    { id: 'athlete_boy',        name: 'Athlete', body: 'boy'  },
+    { id: 'hoodie_boy',         name: 'Hoodie',  body: 'boy'  },
+    // Girls (shared anatomy + skin)
+    { id: 'casual_blue_girl',   name: 'Casual',  body: 'girl' },
+    { id: 'blonde_yellow_girl', name: 'Sunny',   body: 'girl' },
+    { id: 'goth_girl',          name: 'Goth',    body: 'girl' },
+    { id: 'punk_girl',          name: 'Punk',    body: 'girl' },
+    { id: 'preppy_girl',        name: 'Preppy',  body: 'girl' },
+    { id: 'floral_girl',        name: 'Floral',  body: 'girl' },
   ],
   FRAME_W,
   FRAME_H,
