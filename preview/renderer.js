@@ -615,29 +615,44 @@ function drawAvatar(a) {
   ctx.ellipse(sx, sy, 9 * scale, 2.6 * scale, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Bob:
+  // Bob + sway:
   //   idle    → soft breathing bob (~0.5 px)
-  //   walking → step bob (~2 px), lifts on each footfall so the motion
-  //             reads even when the PixelLab south/north walk frames
-  //             have barely any visible leg movement
+  //   walking → step bob (~2 px lift on each footfall) + small horizontal
+  //             sway (±1 px) during south/north walks where the underlying
+  //             PixelLab frames don't move much. Together the motion sells
+  //             walking even though the leg cycle is only 3 frames.
   //   sitting → no bob (you don't bob on a chair)
   let bob = 0;
+  let sway = 0;
   if (a.state === 'idle') {
     bob = Math.sin(a.bob) * 0.5 * scale;
   } else if (a.state === 'walking') {
-    // |sin| over the walk cycle = a bump per foot strike; two bumps
-    // per full 6-frame cycle so the rhythm matches actual stepping.
-    const phase = (a.walkFrame / WALK_FRAMES) * Math.PI * 2;
+    // Tie animation to a single phase derived from walkFrame so the bob
+    // and the leg-frame swap line up: bob peaks when a foot lifts.
+    const cycle = directionFrames;             // 3 for south, 6 elsewhere
+    const phase = (a.walkFrame / cycle) * Math.PI * 2;
     bob = -Math.abs(Math.sin(phase)) * 2 * scale;
+    // Horizontal sway: only on south + north where PixelLab can't show
+    // the side-step motion. East/West rows have proper leg animation.
+    if (a.direction === DIR_S || a.direction === DIR_N) {
+      sway = Math.sin(phase) * 1 * scale;
+    }
   }
 
   // Col = walk frame, row = facing direction.
-  // Frame cap per direction. PixelLab's south walks tend to flip a few
-  // late frames into back-facing on some presets (punk_red_boy frame 5,
-  // nerd_kid 4-5, hoodie_boy 3-5). Clamp south to a 3-frame loop so we
-  // never land on those glitched frames. North/East/West are clean.
-  const directionFrames = (a.direction === DIR_S) ? 3 : WALK_FRAMES;
-  const frameCol = a.state === 'walking' ? (a.walkFrame % directionFrames) : 0;
+  // South walks are problematic — PixelLab flips late frames into
+  // back-facing on some presets. Only the first 3 frames are reliably
+  // forward-facing. To get a clean walking-rhythm cadence comparable to
+  // the 6-frame north walk, sequence those 3 frames in a 4-step pattern:
+  //   rest → left step → rest → right step → repeat
+  // That gives the proper "step-pause-step-pause" walking feel without
+  // ever landing on the glitched frames.
+  const SOUTH_SEQ = [0, 1, 0, 2];
+  const directionFrames = (a.direction === DIR_S) ? SOUTH_SEQ.length : WALK_FRAMES;
+  const rawFrame = a.walkFrame % directionFrames;
+  const frameCol = a.state === 'walking'
+    ? (a.direction === DIR_S ? SOUTH_SEQ[rawFrame] : rawFrame)
+    : 0;
   const frameRow = a.direction;
 
   // Sitting pose: raise the sprite so the feet land on the cushion of
